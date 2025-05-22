@@ -167,7 +167,7 @@
             display: flex;
             align-items: center;
             position: relative;
-            z-index: 9999 !important;
+            z-index: 100;
             margin-right: 20px;
             top: -5px;
         }
@@ -175,14 +175,14 @@
         .dropdown-menu {
             position: absolute;
             top: 45px;
-            right: -60px;
+            left: 0;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             padding: 8px 0;
             min-width: 200px;
             display: none;
-            z-index: 10000;
+            z-index: 101;
         }
 
         .dropdown-menu.active {
@@ -488,8 +488,10 @@
                 top: 0;
             }
 
+            /* Fix dropdown positioning on mobile */
             .dropdown-menu {
-                right: 0;
+                left: 0;
+                /* Align to right edge */
                 width: 100%;
                 max-width: 250px;
             }
