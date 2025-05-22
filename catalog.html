@@ -167,7 +167,7 @@
             display: flex;
             align-items: center;
             position: relative;
-            z-index: 9999 !important;
+            z-index: 100;
             margin-right: 20px;
             top: -5px;
         }
@@ -175,14 +175,14 @@
         .dropdown-menu {
             position: absolute;
             top: 45px;
-            right: -60px;
+            left: 0;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             padding: 8px 0;
             min-width: 200px;
             display: none;
-            z-index: 10000;
+            z-index: 101;
         }
 
         .dropdown-menu.active {
@@ -738,65 +738,241 @@
             color: #e21b1b;
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .main-content {
-                margin-left: 0;
-                width: 100%;
-                padding: 15px;
-            }
+      /* Replace the existing @media (max-width: 768px) section in catalog.html with this: */
 
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
+/* Replace the existing @media (max-width: 768px) section in catalog.html with this: */
 
-            .user-actions {
-                width: 100%;
-                justify-content: space-between;
-            }
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 15px;
+    }
 
-            .search-section {
-                flex-direction: column;
-                gap: 15px;
-            }
+    .header {
+        flex-direction: column;
+        align-items: center; /* Center everything */
+        gap: 12px;
+        margin-bottom: 20px;
+    }
 
-            .filter-btn {
-                width: 100%;
-                justify-content: center;
-            }
+    /* NEW: Fix the header structure on mobile like myorder.html */
+    .header > div {
+        flex-direction: column;
+        align-items: center; /* Center everything on mobile */
+        gap: 15px;
+        width: 100%;
+    }
 
-            .product-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
+    /* NEW: Make the inner div spread user info and icons apart */
+    .header > div > div {
+        width: 100%;
+        justify-content: space-between; /* User avatar left, icons right */
+    }
 
-            .category-section {
-                flex-direction: column;
-            }
+    .logo {
+        margin-bottom: 10px;
+        align-self: center; /* Center the logo */
+    }
 
-            .category-sidebar {
-                width: 100%;
-                margin-bottom: 20px;
-            }
+    .user-actions {
+        width: 100%;
+        justify-content: space-between; /* User avatar left, icons right */
+    }
 
-            .add-to-cart,
-            .quick-view {
-                width: 100%;
-            }
+    .header-icons {
+        margin-left: 0; /* Remove auto margin */
+    }
 
-            .pagination {
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 8px;
-            }
+    /* Fix user info positioning on mobile */
+    .user-info {
+        margin-right: 20px; /* Add some spacing between user info and icons */
+        top: 0; /* Reset the top positioning */
+    }
 
-            .page-link {
-                padding: 8px 12px;
-            }
-        }
+    /* Fix dropdown positioning on mobile */
+    .dropdown-menu {
+        right: 0; /* Align to right edge */
+        width: 100%;
+        max-width: 250px;
+    }
 
+    .search-section {
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .filter-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .category-section {
+        flex-direction: column;
+    }
+
+    .category-sidebar {
+        width: 100% !important;
+        position: static;
+        margin-bottom: 20px;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .product-card {
+        margin-bottom: 0;
+    }
+
+    .product-image {
+        height: 120px;
+    }
+
+    .product-info {
+        padding: 10px;
+    }
+
+    .product-name {
+        font-size: 14px;
+        margin-bottom: 8px;
+        height: auto;
+        -webkit-line-clamp: 2;
+    }
+
+    .product-meta {
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+
+    .product-price {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .add-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+        width: 100%;
+    }
+
+    .bestselling-banner {
+        padding: 20px;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .banner-content {
+        max-width: 100%;
+    }
+
+    .banner-img {
+        display: none;
+    }
+
+    .banner-title {
+        font-size: 24px;
+    }
+
+    .banner-subtitle {
+        font-size: 14px;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .page-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .quantity-modal {
+        width: 95%;
+        max-width: none;
+        margin: 10px;
+    }
+
+    .mobile-menu-toggle {
+        display: block;
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        z-index: 1000;
+        background: #333;
+        color: white;
+        padding: 8px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .category-sidebar {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        z-index: 999;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .category-sidebar.active {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: white;
+        z-index: 1001;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .close-sidebar {
+        display: block;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        color: #333;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    .mobile-search-section {
+        display: block;
+    }
+
+    .search-section {
+        display: none;
+    }
+
+    .reset-btn {
+        background: none;
+        border: none;
+        color: #555;
+        cursor: pointer;
+        padding: 5px;
+        margin-left: 5px;
+        transition: color 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .reset-btn:hover {
+        color: #e21b1b;
+    }
+}
         @media (max-width: 480px) {
             .header h1 {
                 font-size: 24px;
@@ -811,15 +987,155 @@
             }
 
             .product-name {
-                font-size: 16px;
+                font-size: 14px;
+                height: auto;
+                margin-bottom: 8px;
             }
 
             .product-price {
-                font-size: 18px;
+                font-size: 16px;
             }
 
-            .product-category {
+            .product-meta {
+                font-size: 12px;
+            }
+
+            .product-card {
+                margin-bottom: 15px;
+            }
+
+            .product-image {
+                height: 150px;
+            }
+
+            .stock-badge {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+
+            .add-btn {
+                width: 100%;
+                padding: 8px 15px;
                 font-size: 13px;
+            }
+
+            .user-info {
+                margin-right: 0;
+            }
+
+            .dropdown-menu {
+                right: 0;
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+
+        /* Add styles for mobile menu */
+        .mobile-menu-toggle {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+                position: fixed;
+                top: 15px;
+                right: 15px;
+                z-index: 1000;
+                background: #333;
+                color: white;
+                padding: 8px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+            .category-sidebar {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: white;
+                z-index: 999;
+                overflow-y: auto;
+                padding: 20px;
+            }
+
+            .category-sidebar.active {
+                display: block;
+            }
+
+            .close-sidebar {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #333;
+                font-size: 24px;
+                cursor: pointer;
+            }
+        }
+
+        /* Add new mobile search styles */
+        .mobile-search-section {
+            display: none;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .mobile-search-section {
+                display: block;
+            }
+
+            .search-section {
+                display: none;
+            }
+
+            .reset-btn {
+                background: none;
+                border: none;
+                color: #555;
+                cursor: pointer;
+                padding: 5px;
+                margin-left: 5px;
+                transition: color 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .reset-btn:hover {
+                color: #e21b1b;
+            }
+
+            .category-sidebar.active {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: white;
+                z-index: 1001;
+                overflow-y: auto;
+                padding: 20px;
+            }
+
+            .close-sidebar {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #333;
+                font-size: 24px;
+                cursor: pointer;
             }
         }
     </style>
@@ -1014,6 +1330,42 @@
                         Showing <span id="productCount">0</span> products |
                         <span style="color: #e21b1b; cursor: pointer;" id="sortButton">Sort by: Newest</span>
                     </div>
+                    <!-- Move mobile search bar here, after the product count text -->
+                    <div class="mobile-search-section">
+                        <div class="search-bar">
+                            <input type="text" class="search-input" id="mobileSearchInput"
+                                placeholder="Search by part name, SKU or vehicle compatibility...">
+                            <button class="search-btn" id="mobileSearchBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                            </button>
+                            <button id="mobileResetFiltersBtn" class="reset-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                    <path d="M3 3v5h5"></path>
+                                </svg>
+                            </button>
+                            <button id="mobileFilterBtn" class="reset-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" 
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="4" y1="21" x2="4" y2="14"></line>
+                                    <line x1="4" y1="10" x2="4" y2="3"></line>
+                                    <line x1="12" y1="21" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12" y2="3"></line>
+                                    <line x1="20" y1="21" x2="20" y2="16"></line>
+                                    <line x1="20" y1="12" x2="20" y2="3"></line>
+                                    <line x1="1" y1="14" x2="7" y2="14"></line>
+                                    <line x1="9" y1="8" x2="15" y2="8"></line>
+                                    <line x1="17" y1="16" x2="23" y2="16"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- Product Grid -->
                     <div class="product-grid" id="productGrid">
@@ -1148,7 +1500,6 @@
             });
 
             // Fetch products from database
-            // Fetch products from database
             async function fetchProducts() {
                 try {
                     const { data, error } = await supabase
@@ -1188,7 +1539,7 @@
                 let filteredForCategories = [...products];
 
                 // Apply search filter
-                const searchValue = searchInput.value.trim().toLowerCase();
+                const searchValue = (searchInput.value || mobileSearchInput.value).trim().toLowerCase();
                 if (searchValue) {
                     filteredForCategories = filteredForCategories.filter(p =>
                         p.name.toLowerCase().includes(searchValue) ||
@@ -1258,8 +1609,8 @@
                 // Start with all products
                 let filtered = [...products];
 
-                // Apply search filter
-                const searchValue = searchInput.value.trim().toLowerCase();
+                // Apply search filter (check both desktop and mobile inputs)
+                const searchValue = (searchInput.value || mobileSearchInput.value).trim().toLowerCase();
                 if (searchValue) {
                     filtered = filtered.filter(p =>
                         p.name.toLowerCase().includes(searchValue) ||
@@ -1795,6 +2146,55 @@
                     const currentVal = parseInt(quantityInput.value);
                     quantityInput.value = currentVal + 1;
                 });
+
+                // Get sidebar element once
+                const categorySidebar = document.querySelector('.category-sidebar');
+                
+                // Mobile menu toggle
+                const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+                if (mobileMenuToggle && categorySidebar) {
+                    mobileMenuToggle.addEventListener('click', () => {
+                        categorySidebar.classList.add('active');
+                        addCloseSidebarButton(categorySidebar);
+                    });
+                }
+
+                // Mobile filter button click handler
+                const mobileFilterBtn = document.getElementById('mobileFilterBtn');
+                if (mobileFilterBtn && categorySidebar) {
+                    mobileFilterBtn.addEventListener('click', () => {
+                        categorySidebar.classList.add('active');
+                        addCloseSidebarButton(categorySidebar);
+                    });
+
+                    // Close sidebar when clicking outside
+                    document.addEventListener('click', (e) => {
+                        if (categorySidebar.classList.contains('active') && 
+                            !categorySidebar.contains(e.target) && 
+                            !mobileFilterBtn.contains(e.target)) {
+                            categorySidebar.classList.remove('active');
+                        }
+                    });
+                }
+
+                // Mobile reset button
+                const mobileResetFiltersBtn = document.getElementById('mobileResetFiltersBtn');
+                if (mobileResetFiltersBtn) {
+                    mobileResetFiltersBtn.addEventListener('click', resetFilters);
+                }
+            }
+
+            // Helper function to add close button to sidebar
+            function addCloseSidebarButton(sidebar) {
+                if (!document.querySelector('.close-sidebar')) {
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'close-sidebar';
+                    closeBtn.innerHTML = '×';
+                    closeBtn.addEventListener('click', () => {
+                        sidebar.classList.remove('active');
+                    });
+                    sidebar.appendChild(closeBtn);
+                }
             }
 
             // Toggle dropdown menu
@@ -1805,8 +2205,9 @@
 
             // Reset all filters
             function resetFilters() {
-                // Clear search input
+                // Clear both search inputs
                 searchInput.value = '';
+                mobileSearchInput.value = '';
 
                 // Reset category selection to "All"
                 document.querySelectorAll('.category-link[data-category]').forEach(link => {
