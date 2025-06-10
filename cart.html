@@ -1367,7 +1367,9 @@
                         order_date: new Date().toISOString(),
                         order_id: orderIdValue,
                         driver: checkoutData.driver,
-                        is_urgent: checkoutData.isUrgent
+                        is_urgent: checkoutData.isUrgent,
+                        customer_phone: customerDataForN8n.phone || user.phone || 'N/A', // Store phone for WhatsApp responses
+                        customer_name: customerDataForN8n.name || user.name || 'Unknown Customer' // Store name for reference
                     })
                     .select();
 
