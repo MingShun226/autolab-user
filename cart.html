@@ -695,17 +695,43 @@
                 console.log('📊 Order Data:', orderData);
                 console.log('👤 Customer Data:', customerData);
                 
+                // Ensure we have a phone number - try different sources
+                let customerPhone = customerData.phone;
+                
+                if (!customerPhone || customerPhone === 'N/A' || customerPhone === null) {
+                    console.warn('⚠️ Phone number missing from customerData, trying alternative sources...');
+                    
+                    // Try to get phone from Supabase auth user
+                    try {
+                        const { data: { user }, error: authError } = await supabase.auth.getUser();
+                        if (!authError && user && user.phone) {
+                            customerPhone = user.phone;
+                            console.log('✅ Found phone from auth user:', customerPhone);
+                        }
+                    } catch (authErr) {
+                        console.warn('Could not get auth user phone:', authErr);
+                    }
+                }
+                
+                // If still no phone, use customer_id or a placeholder
+                if (!customerPhone || customerPhone === 'N/A' || customerPhone === null) {
+                    console.warn('⚠️ No phone number available, using customer ID as fallback');
+                    customerPhone = customerData.customer_id || 'UNKNOWN_PHONE';
+                }
+                
+                console.log('📱 Final phone number being used:', customerPhone);
+                
                 // Format the payload for n8n
                 const payload = {
                     messages: [{
-                        from: customerData.phone,
+                        from: customerPhone,
                         text: {
                             body: `ORDER_NOTIFICATION:${JSON.stringify({
                                 orderId: orderData.orderId,
                                 items: orderData.items,
                                 total: orderData.total,
-                                customerPhone: customerData.phone,
-                                customerName: customerData.name,
+                                customerPhone: customerPhone,
+                                customerName: customerData.name || 'Unknown Customer',
                                 customerEmail: customerData.email || '',
                                 deliveryAddress: orderData.address,
                                 deliveryMethod: orderData.deliveryMethod,
@@ -1329,14 +1355,14 @@
                 const randomNum = Math.floor(1000 + Math.random() * 9000);
                 const orderIdValue = `ORD-${currentYear}-${randomNum}`;
 
-                // Create a new order
+                // Create a new order (always unpaid initially)
                 const { data: order, error: orderError } = await supabase
                     .from('orders')
                     .insert({
                         customer_id: user.id,
                         amount: selectedTotal,
-                        status: 'verifying',
-                        payment_status: checkoutData.isPaid ? 'paid' : 'unpaid',
+                        status: 'pending_confirmation', // Changed status to indicate awaiting WhatsApp confirmation
+                        payment_status: 'unpaid', // Always unpaid initially
                         address: checkoutData.deliveryAddress,
                         order_date: new Date().toISOString(),
                         order_id: orderIdValue,
@@ -1397,6 +1423,26 @@
 
                 // ===== n8n INTEGRATION - SEND WHATSAPP NOTIFICATION =====
                 
+                // Debug customer phone number
+                console.log('🔍 Debug - User object:', user);
+                console.log('🔍 Debug - User phone from session:', user.phone);
+                
+                // Get fresh customer data from database to ensure we have the phone number
+                const { data: freshCustomerData, error: customerFetchError } = await supabase
+                    .from('customers')
+                    .select('phone, name, email, customer_id')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (customerFetchError) {
+                    console.error('Error fetching fresh customer data:', customerFetchError);
+                } else {
+                    console.log('🔍 Fresh customer data from DB:', freshCustomerData);
+                }
+                
+                // Use fresh data if available, fallback to session data
+                const customerDataForN8n = freshCustomerData || user;
+                
                 // Prepare data for n8n
                 const orderDataForN8n = {
                     orderId: orderIdValue,
@@ -1413,13 +1459,14 @@
                     deliveryMethod: checkoutData.deliveryMethod,
                     driver: checkoutData.driver,
                     isUrgent: checkoutData.isUrgent,
-                    isPaid: checkoutData.isPaid,
+                    isPaid: false, // Always false initially - payment after WhatsApp confirmation
                     orderDate: new Date().toISOString()
                 };
 
                         // Send notification to n8n (non-blocking)
         console.log('🚀 Sending purchase notification to n8n...');
-        const n8nSuccess = await sendOrderToN8n(orderDataForN8n, user);
+        console.log('🔍 Customer data being sent:', customerDataForN8n);
+        const n8nSuccess = await sendOrderToN8n(orderDataForN8n, customerDataForN8n);
                 
                 if (!n8nSuccess) {
                     console.warn('⚠️ Failed to send WhatsApp notification, but order was placed successfully');
@@ -1450,29 +1497,28 @@
                 updateCartDisplay();
 
                 // Show success message with WhatsApp notification status
-                let successMessage = 'Order placed successfully!';
+                let successMessage = '🎉 Order placed successfully!\n\n';
 
                 if (n8nSuccess) {
-                    successMessage += ' You will receive a WhatsApp message shortly to confirm your order details.';
+                    successMessage += '📱 You will receive a WhatsApp message shortly with your order confirmation.\n\n';
+                    successMessage += '⚡ Next steps:\n';
+                    successMessage += '1. Check your WhatsApp for order details\n';
+                    successMessage += '2. Reply "confirm" to proceed with your order\n';
+                    successMessage += '3. Complete payment after confirmation\n\n';
                 } else {
-                    successMessage += ' Note: WhatsApp notification could not be sent, but your order is confirmed.';
+                    successMessage += '⚠️ WhatsApp notification could not be sent, but your order is confirmed.\n\n';
                 }
 
-                // Add payment status info
-                if (checkoutData.isPaid) {
-                    successMessage += ' Your order is paid';
-                } else {
-                    successMessage += ' Your order is awaiting payment';
-                }
-
-                // Add delivery method info
-                successMessage += ' and is verifying.';
+                // Add order details
+                successMessage += `📋 Order ID: ${orderIdValue}\n`;
+                successMessage += `🚚 Delivery: ${checkoutData.deliveryMethod.replace('_', ' ').toUpperCase()}\n`;
+                successMessage += `👨‍💼 Assigned to: ${checkoutData.driver}\n`;
+                
                 if (checkoutData.isUrgent) {
-                    successMessage += ' This order is marked as URGENT.';
+                    successMessage += '🚨 This order is marked as URGENT\n';
                 }
-                successMessage += ` Delivery method: ${checkoutData.deliveryMethod.replace('_', ' ').toUpperCase()}.`;
-                successMessage += ` Assigned to: ${checkoutData.driver}.`;
-                successMessage += ` Your order ID is: ${orderIdValue}`;
+                
+                successMessage += '\n💳 Payment will be required after WhatsApp confirmation.';
 
                 alert(successMessage);
 
@@ -1773,80 +1819,34 @@
                 addressSection.appendChild(addressLabel);
                 addressSection.appendChild(addressesContainer);
 
-                // 3. Payment Method Section
-                const paymentMethodLabel = document.createElement('div');
-                paymentMethodLabel.textContent = 'Payment Option';
-                paymentMethodLabel.style.fontWeight = '500';
-                paymentMethodLabel.style.marginBottom = '10px';
+                // 3. Payment Notice Section (replacing payment options)
+                const paymentNoticeLabel = document.createElement('div');
+                paymentNoticeLabel.textContent = 'Payment Information';
+                paymentNoticeLabel.style.fontWeight = '500';
+                paymentNoticeLabel.style.marginBottom = '10px';
 
-                const paymentOptions = document.createElement('div');
-                paymentOptions.style.display = 'flex';
-                paymentOptions.style.flexDirection = 'column';
-                paymentOptions.style.gap = '10px';
+                const paymentNoticeBox = document.createElement('div');
+                paymentNoticeBox.style.padding = '15px';
+                paymentNoticeBox.style.border = '1px solid #17a2b8';
+                paymentNoticeBox.style.borderRadius = '8px';
+                paymentNoticeBox.style.backgroundColor = '#e8f4f8';
+                paymentNoticeBox.style.color = '#0c5460';
 
-                // Pay Now option
-                const payNowOption = document.createElement('div');
-                payNowOption.style.display = 'flex';
-                payNowOption.style.alignItems = 'center';
-                payNowOption.style.padding = '10px';
-                payNowOption.style.border = '1px solid #e21b1b';
-                payNowOption.style.borderRadius = '8px';
-                payNowOption.style.backgroundColor = '#fff3f3';
-                payNowOption.style.cursor = 'pointer';
+                const paymentNoticeText = document.createElement('div');
+                paymentNoticeText.innerHTML = `
+                    <strong>📱 Payment Process:</strong><br>
+                    1. After placing your order, you'll receive a WhatsApp confirmation<br>
+                    2. Reply "confirm" to proceed with your order<br>
+                    3. Payment link will be sent after confirmation<br>
+                    4. Complete payment to process your order
+                `;
+                paymentNoticeText.style.lineHeight = '1.5';
 
-                const payNowRadio = document.createElement('input');
-                payNowRadio.type = 'radio';
-                payNowRadio.id = 'pay-now-radio';
-                payNowRadio.name = 'paymentMethod';
-                payNowRadio.value = 'paid';
-                payNowRadio.checked = true;
-                payNowRadio.style.marginRight = '10px';
-
-                payNowOption.appendChild(payNowRadio);
-                payNowOption.appendChild(document.createTextNode('Pay Now'));
-
-                // Pay Later option
-                const payLaterOption = document.createElement('div');
-                payLaterOption.style.display = 'flex';
-                payLaterOption.style.alignItems = 'center';
-                payLaterOption.style.padding = '10px';
-                payLaterOption.style.border = '1px solid #ddd';
-                payLaterOption.style.borderRadius = '8px';
-                payLaterOption.style.cursor = 'pointer';
-
-                const payLaterRadio = document.createElement('input');
-                payLaterRadio.type = 'radio';
-                payLaterRadio.id = 'pay-later-radio';
-                payLaterRadio.name = 'paymentMethod';
-                payLaterRadio.value = 'unpaid';
-                payLaterRadio.style.marginRight = '10px';
-
-                payLaterOption.appendChild(payLaterRadio);
-                payLaterOption.appendChild(document.createTextNode('Pay Later'));
-
-                // Add click handlers for payment options
-                payNowOption.addEventListener('click', function () {
-                    payNowRadio.checked = true;
-                    payNowOption.style.borderColor = '#e21b1b';
-                    payNowOption.style.backgroundColor = '#fff3f3';
-                    payLaterOption.style.borderColor = '#ddd';
-                    payLaterOption.style.backgroundColor = 'white';
-                });
-
-                payLaterOption.addEventListener('click', function () {
-                    payLaterRadio.checked = true;
-                    payLaterOption.style.borderColor = '#e21b1b';
-                    payLaterOption.style.backgroundColor = '#fff3f3';
-                    payNowOption.style.borderColor = '#ddd';
-                    payNowOption.style.backgroundColor = 'white';
-                });
-
-                paymentOptions.appendChild(payNowOption);
-                paymentOptions.appendChild(payLaterOption);
+                paymentNoticeBox.appendChild(paymentNoticeText);
 
                 const paymentMethodSection = document.createElement('div');
-                paymentMethodSection.appendChild(paymentMethodLabel);
-                paymentMethodSection.appendChild(paymentOptions);
+                paymentMethodSection.appendChild(paymentNoticeLabel);
+                paymentMethodSection.appendChild(paymentNoticeBox);
 
                 // 4. Urgent Order Section
                 const urgentOrderLabel = document.createElement('div');
@@ -2003,18 +2003,15 @@
                         }
                     }
 
-                    // Get payment method
-                    const isPaid = document.querySelector('input[name="paymentMethod"]:checked').value === 'paid';
-
                     // Get urgent status
                     const isUrgent = document.getElementById('urgent-checkbox').checked;
 
-                    // Return checkout data
+                    // Return checkout data (payment always false initially)
                     document.body.removeChild(overlay);
                     resolve({
                         deliveryMethod,
                         deliveryAddress,
-                        isPaid,
+                        isPaid: false, // Always false - payment after WhatsApp confirmation
                         isUrgent,
                         driver
                     });
