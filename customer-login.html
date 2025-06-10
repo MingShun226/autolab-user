@@ -195,9 +195,9 @@
 
         <form id="loginForm">
             <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
-                <div class="error-message" id="emailError">Please enter your email</div>
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" required placeholder="Enter your phone number">
+                <div class="error-message" id="phoneError">Please enter your phone number</div>
             </div>
 
             <div class="form-group">
@@ -243,13 +243,33 @@
                     // Store customer info in session
                     sessionStorage.setItem('currentUser', JSON.stringify({
                         id: user.id,
-                        email: user.email,
+                        phone: user.phone,
+                        email: customerData.email,
                         name: customerData.name,
-                        phone: customerData.phone,
                         address: customerData.address,
                         customer_id: customerData.customer_id,
                         type: 'customer'
                     }));
+
+                                             // Send login event to n8n webhook (optional)
+                         try {
+                             await fetch('https://subapipie.app.n8n.cloud/webhook-test/order-placed', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                event: 'customer_login',
+                                customer_id: customerData.customer_id,
+                                name: customerData.name,
+                                phone: user.phone,
+                                timestamp: new Date().toISOString()
+                            })
+                        });
+                    } catch (webhookError) {
+                        console.log('Webhook notification failed:', webhookError);
+                        // Don't block login if webhook fails
+                    }
 
                     // Redirect to customer dashboard
                     window.location.href="catalog.html"
@@ -261,7 +281,7 @@
         document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
             const password = document.getElementById('password').value;
 
             // Reset error messages
@@ -271,9 +291,9 @@
 
             let isValid = true;
 
-            // Email validation
-            if (!email) {
-                document.getElementById('emailError').style.display = 'block';
+            // Phone validation
+            if (!phone) {
+                document.getElementById('phoneError').style.display = 'block';
                 isValid = false;
             }
 
@@ -285,9 +305,21 @@
 
             if (isValid) {
                 try {
-                    // Sign in with Supabase Auth
+                    // Sign in with Supabase Auth - find user by phone in database
+                    // First, find the user by phone number in the database
+                    const { data: userData, error: dbError } = await supabase
+                        .from('customers')
+                        .select('email')
+                        .eq('phone', phone)
+                        .single();
+                    
+                    if (dbError || !userData) {
+                        throw new Error('Phone number not found');
+                    }
+                    
+                    // Then sign in with email
                     const { data: { user }, error } = await supabase.auth.signInWithPassword({
-                        email: email,
+                        email: userData.email,
                         password: password
                     });
 
@@ -306,20 +338,40 @@
                         // Store customer info in session
                         sessionStorage.setItem('currentUser', JSON.stringify({
                             id: user.id,
-                            email: user.email,
+                            phone: user.phone,
+                            email: customerData.email,
                             name: customerData.name,
-                            phone: customerData.phone,
                             address: customerData.address,
                             customer_id: customerData.customer_id,
                             type: 'customer'
                         }));
 
+                        // Send login event to n8n webhook (optional)
+                        try {
+                            await fetch('https://subapipie.app.n8n.cloud/webhook-test/order-placed', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    event: 'customer_login',
+                                    customer_id: customerData.customer_id,
+                                    name: customerData.name,
+                                    phone: user.phone,
+                                    timestamp: new Date().toISOString()
+                                })
+                            });
+                        } catch (webhookError) {
+                            console.log('Webhook notification failed:', webhookError);
+                            // Don't block login if webhook fails
+                        }
+
                         // Redirect to customer dashboard
-                       window.location.href="catalog.html"
+                        window.location.href="catalog.html"
                     }
                 } catch (error) {
                     console.error('Error signing in:', error);
-                    alert('Invalid email or password');
+                    alert('Invalid phone number or password');
                 }
             }
         });
@@ -328,25 +380,25 @@
         document.getElementById('forgotPassword').addEventListener('click', async function (e) {
             e.preventDefault();
 
-            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
 
-            if (!email) {
-                document.getElementById('emailError').textContent = 'Please enter your email to reset password';
-                document.getElementById('emailError').style.display = 'block';
+            if (!phone) {
+                document.getElementById('phoneError').textContent = 'Please enter your phone number to reset password';
+                document.getElementById('phoneError').style.display = 'block';
                 return;
             }
 
             try {
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                const { error } = await supabase.auth.resetPasswordForPhone(phone, {
                     redirectTo: window.location.origin + '/customer-reset-password.html',
                 });
 
                 if (error) throw error;
 
-                alert('Password reset email sent. Please check your inbox.');
+                alert('Password reset SMS sent. Please check your inbox.');
             } catch (error) {
-                console.error('Error sending password reset email:', error);
-                alert('Failed to send password reset email. Please try again.');
+                console.error('Error sending password reset SMS:', error);
+                alert('Failed to send password reset SMS. Please try again.');
             }
         });
     </script>

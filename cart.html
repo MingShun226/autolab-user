@@ -680,6 +680,118 @@
         const supabaseUrl = 'https://bbwimjvqpyxwhovihtfm.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid2ltanZxcHl4d2hvdmlodGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjAwMDksImV4cCI6MjA2MDk5NjAwOX0._D3wackPNKg-IbiswH7M-3wqeQRP6ujMmcJ9bb7_1z0';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // n8n Webhook Configuration
+        const N8N_WEBHOOK_URL = 'https://subapipie.app.n8n.cloud/webhook-test/order-placed';
+        // Your actual n8n webhook URL for purchase detection
+
+        // Enhanced function to send order notification to n8n with detailed debugging
+        async function sendOrderToN8n(orderData, customerData, retryCount = 0) {
+            const MAX_RETRIES = 3;
+            
+            try {
+                console.log('🚀 Attempting to send order to n8n...');
+                console.log('📋 Webhook URL:', N8N_WEBHOOK_URL);
+                console.log('📊 Order Data:', orderData);
+                console.log('👤 Customer Data:', customerData);
+                
+                // Format the payload for n8n
+                const payload = {
+                    messages: [{
+                        from: customerData.phone,
+                        text: {
+                            body: `ORDER_NOTIFICATION:${JSON.stringify({
+                                orderId: orderData.orderId,
+                                items: orderData.items,
+                                total: orderData.total,
+                                customerPhone: customerData.phone,
+                                customerName: customerData.name,
+                                customerEmail: customerData.email || '',
+                                deliveryAddress: orderData.address,
+                                deliveryMethod: orderData.deliveryMethod,
+                                driver: orderData.driver,
+                                isUrgent: orderData.isUrgent,
+                                isPaid: orderData.isPaid,
+                                orderDate: orderData.orderDate
+                            })}`
+                        }
+                    }]
+                };
+                
+                console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
+                
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                console.log('📥 Response status:', response.status);
+                console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                // Try to get response text for debugging
+                let responseText = '';
+                try {
+                    responseText = await response.text();
+                    console.log('📥 Response body:', responseText);
+                } catch (textError) {
+                    console.log('📥 Could not read response body:', textError);
+                }
+
+                if (response.ok) {
+                    console.log('✅ n8n webhook called successfully!');
+                    return true;
+                } else {
+                    throw new Error(`Webhook failed: ${response.status} ${response.statusText} - ${responseText}`);
+                }
+            } catch (error) {
+                console.error(`❌ n8n webhook attempt ${retryCount + 1} failed:`, error);
+                
+                // Additional error details
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    console.error('🌐 Network error - check if n8n URL is correct and accessible');
+                    console.error('🔗 URL being called:', N8N_WEBHOOK_URL);
+                }
+                
+                // Retry logic with progressive delay
+                if (retryCount < MAX_RETRIES) {
+                    console.log(`🔄 Retrying webhook call... (${retryCount + 1}/${MAX_RETRIES})`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+                    return sendOrderToN8n(orderData, customerData, retryCount + 1);
+                }
+                
+                console.error('💥 All n8n webhook retry attempts failed');
+                return false;
+            }
+        }
+
+        // Function to test webhook connectivity (for debugging)
+        async function testN8nConnection() {
+            try {
+                console.log('🧪 Testing n8n webhook connectivity...');
+                
+                const testResponse = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'GET' // Just test if the URL is reachable
+                });
+                
+                console.log('🧪 Test response status:', testResponse.status);
+                
+                if (testResponse.status === 404) {
+                    console.error('❌ Webhook endpoint not found - check your n8n workflow is activated and path is correct');
+                } else if (testResponse.status === 405) {
+                    console.log('✅ Webhook endpoint exists (got 405 Method Not Allowed for GET, which is expected)');
+                } else {
+                    console.log('🧪 Webhook endpoint response:', testResponse.status);
+                }
+                
+            } catch (error) {
+                console.error('❌ Cannot reach n8n webhook:', error);
+                console.error('🔍 Check if your n8n instance is running and URL is correct');
+            }
+        }
 
         // Global variables
         let cartItems = [];
@@ -700,6 +812,9 @@
         document.addEventListener('DOMContentLoaded', async function () {
             console.log("Initializing cart page");
 
+            // Test n8n connection on page load (optional - comment out in production)
+            await testN8nConnection();
+
             // Initialize DOM element references
             emptyCartState = document.getElementById('emptyCartState');
             cartItemsList = document.getElementById('cartItemsList');
@@ -710,7 +825,6 @@
             checkoutBtn = document.getElementById('checkoutBtn');
 
             console.log("DOM elements initialized");
-
 
             const cartContainer = document.querySelector('.cart-container');
 
@@ -1152,7 +1266,7 @@
                 dropdown.classList.toggle('active');
             }
         }
-
+        
         // Set up event listeners
         function setupEventListeners() {
             // Checkout button
@@ -1163,8 +1277,7 @@
             }
         }
 
-        // Process checkout
-        // Process checkout with enhanced UI
+        // Process checkout with enhanced UI and n8n integration
         async function proceedToCheckout() {
             try {
                 // Get current user
@@ -1175,6 +1288,10 @@
                 }
 
                 const user = JSON.parse(userStr);
+
+                // Debug logging
+                console.log('🔍 Debug - Customer phone number:', user.phone);
+                console.log('🔍 Debug - n8n URL:', N8N_WEBHOOK_URL);
 
                 // Check if cart has items
                 if (cartItems.length === 0) {
@@ -1278,6 +1395,39 @@
                     return;
                 }
 
+                // ===== n8n INTEGRATION - SEND WHATSAPP NOTIFICATION =====
+                
+                // Prepare data for n8n
+                const orderDataForN8n = {
+                    orderId: orderIdValue,
+                    items: selectedItems.map(item => ({
+                        name: item.product.name,
+                        quantity: item.quantity,
+                        price: item.product.price,
+                        productId: item.product.product_id || item.product.id,
+                        variations: item.product.variations || null,
+                        category: item.product.category || null
+                    })),
+                    total: selectedTotal,
+                    address: checkoutData.deliveryAddress,
+                    deliveryMethod: checkoutData.deliveryMethod,
+                    driver: checkoutData.driver,
+                    isUrgent: checkoutData.isUrgent,
+                    isPaid: checkoutData.isPaid,
+                    orderDate: new Date().toISOString()
+                };
+
+                        // Send notification to n8n (non-blocking)
+        console.log('🚀 Sending purchase notification to n8n...');
+        const n8nSuccess = await sendOrderToN8n(orderDataForN8n, user);
+                
+                if (!n8nSuccess) {
+                    console.warn('⚠️ Failed to send WhatsApp notification, but order was placed successfully');
+                    // Don't fail the entire checkout process if WhatsApp notification fails
+                }
+
+                // ===== END n8n INTEGRATION =====
+
                 // Remove checked out items from cart
                 for (const item of selectedItems) {
                     const { error: removeError } = await supabase
@@ -1299,8 +1449,14 @@
                 // Update cart display
                 updateCartDisplay();
 
-                // Show success message with payment and delivery info
+                // Show success message with WhatsApp notification status
                 let successMessage = 'Order placed successfully!';
+
+                if (n8nSuccess) {
+                    successMessage += ' You will receive a WhatsApp message shortly to confirm your order details.';
+                } else {
+                    successMessage += ' Note: WhatsApp notification could not be sent, but your order is confirmed.';
+                }
 
                 // Add payment status info
                 if (checkoutData.isPaid) {
@@ -1321,10 +1477,11 @@
                 alert(successMessage);
 
             } catch (error) {
-                console.error('Error processing checkout:', error);
+                console.error('💥 Error processing checkout:', error);
                 alert('An error occurred during checkout. Please try again.');
             }
         }
+
         // Combined checkout dialog function - replaces all separate prompts
         function showCombinedCheckoutDialog(user, total) {
             return new Promise((resolve) => {
@@ -1887,7 +2044,6 @@
                 }
             });
         }
-
 
         // Handle logout
         async function logout() {

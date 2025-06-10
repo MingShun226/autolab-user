@@ -194,8 +194,8 @@
             
             <div class="form-group">
                 <label for="phone">Phone Number</label>
-                <input type="tel" id="phone" name="phone" required>
-                <div class="error-message" id="phoneError">Please enter a valid phone number</div>
+                <input type="tel" id="phone" name="phone" required placeholder="+1234567890">
+                <div class="error-message" id="phoneError">Please enter a valid phone number (e.g., +1234567890)</div>
             </div>
             
             <div class="form-group">
@@ -261,6 +261,10 @@
                 return `CUST${timestamp}${random}`;
             }
 
+            // Development Mode: Skip SMS verification
+            // In production, you would enable SMS verification through Supabase
+            // For now, users can register and login immediately with phone numbers
+            
             // Handle form submission
             document.getElementById('registerForm').addEventListener('submit', async function(e) {
                 console.log("Form submitted - starting registration process");
@@ -299,10 +303,17 @@
                     console.log("Email validation failed");
                 }
                 
+                // Phone validation with format check
                 if (!phone) {
+                    document.getElementById('phoneError').textContent = 'Please enter a valid phone number (e.g., +1234567890)';
                     document.getElementById('phoneError').style.display = 'block';
                     isValid = false;
-                    console.log("Phone validation failed");
+                    console.log("Phone validation failed - empty");
+                } else if (!phone.match(/^\+[1-9]\d{1,14}$/)) {
+                    document.getElementById('phoneError').textContent = 'Phone number must be in international format (e.g., +1234567890)';
+                    document.getElementById('phoneError').style.display = 'block';
+                    isValid = false;
+                    console.log("Phone validation failed - invalid format");
                 }
                 
                 if (!address) {
@@ -332,7 +343,7 @@
                         const customerId = generateCustomerId();
                         console.log("Generated customer ID:", customerId);
                         
-                        // Create user in Supabase Auth
+                        // Create user in Supabase Auth with email (temporary until SMS is configured)
                         console.log("Creating user in Supabase Auth:", email);
                         const authResponse = await supabase.auth.signUp({
                             email: email,
@@ -380,7 +391,7 @@
                             }
                             
                             console.log("Registration successful!");
-                            alert('Registration successful! Please check your email to verify your account.');
+                            alert('Registration successful! Your account is ready to use. You can now login with your phone number.');
                             console.log("Redirecting to login page");
                             window.location.href = 'customer-login.html';
                         } else {
