@@ -1372,6 +1372,21 @@
                 // Use fresh data if available, fallback to session data
                 const customerDataForN8n = freshCustomerData || user;
 
+                // Cancel any existing pending orders for this customer
+                console.log('🔄 Cancelling any existing pending orders for customer...');
+                const { error: cancelError } = await supabase
+                    .from('orders')
+                    .update({
+                        status: 'cancelled'
+                    })
+                    .eq('customer_id', user.id)
+                    .in('status', ['pending_confirmation', 'payment_pending']);
+
+                if (cancelError) {
+                    console.warn('⚠️ Could not cancel existing orders:', cancelError);
+                    // Don't block checkout if this fails
+                }
+
                 // Generate order ID (format: ORD-YYYY-XXXX)
                 const currentYear = new Date().getFullYear();
                 const randomNum = Math.floor(1000 + Math.random() * 9000);
