@@ -1350,6 +1350,28 @@
                     return;
                 }
 
+                // ===== FETCH CUSTOMER DATA FIRST =====
+                
+                // Debug customer phone number
+                console.log('🔍 Debug - User object:', user);
+                console.log('🔍 Debug - User phone from session:', user.phone);
+                
+                // Get fresh customer data from database to ensure we have the phone number
+                const { data: freshCustomerData, error: customerFetchError } = await supabase
+                    .from('customers')
+                    .select('phone, name, email, customer_id')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (customerFetchError) {
+                    console.error('Error fetching fresh customer data:', customerFetchError);
+                } else {
+                    console.log('🔍 Fresh customer data from DB:', freshCustomerData);
+                }
+                
+                // Use fresh data if available, fallback to session data
+                const customerDataForN8n = freshCustomerData || user;
+
                 // Generate order ID (format: ORD-YYYY-XXXX)
                 const currentYear = new Date().getFullYear();
                 const randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -1424,26 +1446,6 @@
                 }
 
                 // ===== n8n INTEGRATION - SEND WHATSAPP NOTIFICATION =====
-                
-                // Debug customer phone number
-                console.log('🔍 Debug - User object:', user);
-                console.log('🔍 Debug - User phone from session:', user.phone);
-                
-                // Get fresh customer data from database to ensure we have the phone number
-                const { data: freshCustomerData, error: customerFetchError } = await supabase
-                    .from('customers')
-                    .select('phone, name, email, customer_id')
-                    .eq('id', user.id)
-                    .single();
-                
-                if (customerFetchError) {
-                    console.error('Error fetching fresh customer data:', customerFetchError);
-                } else {
-                    console.log('🔍 Fresh customer data from DB:', freshCustomerData);
-                }
-                
-                // Use fresh data if available, fallback to session data
-                const customerDataForN8n = freshCustomerData || user;
                 
                 // Prepare data for n8n
                 const orderDataForN8n = {
