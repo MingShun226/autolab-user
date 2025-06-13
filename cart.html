@@ -682,7 +682,7 @@
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
         // n8n Webhook Configuration
-        const N8N_WEBHOOK_URL = 'https://subapipie.app.n8n.cloud/webhook-test/order-placed';
+        const N8N_WEBHOOK_URL = 'https://apipietech.app.n8n.cloud/webhook-test/order-placed';
         // Your actual n8n webhook URL for purchase detection
 
         // Enhanced function to send order notification to n8n with detailed debugging
@@ -1372,15 +1372,15 @@
                 // Use fresh data if available, fallback to session data
                 const customerDataForN8n = freshCustomerData || user;
 
-                // Cancel any existing pending orders for this customer
-                console.log('🔄 Cancelling any existing pending orders for customer...');
+                // Cancel any existing unconfirmed orders for this customer
+                console.log('🔄 Cancelling any existing unconfirmed orders for customer...');
                 const { error: cancelError } = await supabase
                     .from('orders')
                     .update({
                         status: 'cancelled'
                     })
                     .eq('customer_id', user.id)
-                    .in('status', ['pending_confirmation', 'payment_pending']);
+                    .in('status', ['awaiting_confirmation', 'pending_confirmation', 'payment_pending']);
 
                 if (cancelError) {
                     console.warn('⚠️ Could not cancel existing orders:', cancelError);
@@ -1392,13 +1392,13 @@
                 const randomNum = Math.floor(1000 + Math.random() * 9000);
                 const orderIdValue = `ORD-${currentYear}-${randomNum}`;
 
-                // Create a new order (always unpaid initially)
+                // Create a new order (hidden from admin until confirmed)
                 const { data: order, error: orderError } = await supabase
                     .from('orders')
                     .insert({
                         customer_id: user.id,
                         amount: selectedTotal,
-                        status: 'pending_confirmation', // Changed status to indicate awaiting WhatsApp confirmation
+                        status: 'awaiting_confirmation', // Hidden status - not visible to admin until confirmed
                         payment_status: 'unpaid', // Always unpaid initially
                         address: checkoutData.deliveryAddress,
                         order_date: new Date().toISOString(),
@@ -1515,16 +1515,18 @@
                 updateCartDisplay();
 
                 // Show success message with WhatsApp notification status
-                let successMessage = '🎉 Order placed successfully!\n\n';
+                let successMessage = '🎉 Order submitted successfully!\n\n';
 
                 if (n8nSuccess) {
-                    successMessage += '📱 You will receive a WhatsApp message shortly with your order confirmation.\n\n';
-                    successMessage += '⚡ Next steps:\n';
+                    successMessage += '📱 You will receive a WhatsApp message shortly with your order details.\n\n';
+                    successMessage += '⚡ IMPORTANT NEXT STEPS:\n';
                     successMessage += '1. Check your WhatsApp for order details\n';
                     successMessage += '2. Reply "confirm" to proceed with your order\n';
-                    successMessage += '3. Complete payment after confirmation\n\n';
+                    successMessage += '3. Your order will only be sent to admin AFTER confirmation\n';
+                    successMessage += '4. Complete payment after confirmation\n\n';
+                    successMessage += '⚠️ Your order will NOT be processed until you confirm via WhatsApp!\n\n';
                 } else {
-                    successMessage += '⚠️ WhatsApp notification could not be sent, but your order is confirmed.\n\n';
+                    successMessage += '⚠️ WhatsApp notification could not be sent. Please contact us directly.\n\n';
                 }
 
                 // Add order details
