@@ -680,144 +680,253 @@
         const supabaseUrl = 'https://bbwimjvqpyxwhovihtfm.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid2ltanZxcHl4d2hvdmlodGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjAwMDksImV4cCI6MjA2MDk5NjAwOX0._D3wackPNKg-IbiswH7M-3wqeQRP6ujMmcJ9bb7_1z0';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        
+
         // n8n Webhook Configuration
         const N8N_WEBHOOK_URL = 'https://apipietech.app.n8n.cloud/webhook-test/order-placed';
         // Your actual n8n webhook URL for purchase detection
 
         // Enhanced function to send order notification to n8n with detailed debugging
         async function sendOrderToN8n(orderData, customerData, retryCount = 0) {
-            const MAX_RETRIES = 3;
+    const MAX_RETRIES = 3;
+    const RETRY_DELAYS = [1000, 2000, 5000]; // Progressive delay
+
+    try {
+        console.log(`🚀 Sending order to n8n (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`);
+        console.log('📋 Order Data:', orderData);
+        console.log('👤 Customer Data:', customerData);
+
+        // ENHANCED PHONE NUMBER HANDLING
+        let customerPhone = null;
+        
+        // Try multiple sources for phone number
+        const phoneSources = [
+            customerData.phone,
+            customerData.customer_phone,
+            customerData.phoneNumber,
+            orderData.customerPhone
+        ];
+        
+        for (const phone of phoneSources) {
+            if (phone && phone !== 'N/A' && phone !== null && phone !== undefined) {
+                customerPhone = standardizePhoneNumber(phone);
+                break;
+            }
+        }
+        
+        // If still no phone, try getting from Supabase auth
+        if (!customerPhone) {
+            console.warn('⚠️ No phone in customer data, checking auth user...');
+            try {
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+                if (!authError && user && user.phone) {
+                    customerPhone = standardizePhoneNumber(user.phone);
+                    console.log('✅ Found phone from auth user:', customerPhone);
+                }
+            } catch (authErr) {
+                console.warn('Could not get auth user phone:', authErr);
+            }
+        }
+        
+        // Final validation
+        if (!customerPhone) {
+            console.error('❌ CRITICAL: No phone number available!');
+            // Still send to n8n but with a flag
+            customerPhone = 'NO_PHONE_' + (customerData.customer_id || 'UNKNOWN');
+        }
+
+        console.log('📱 Final phone number:', customerPhone);
+
+        // IMPROVED PAYLOAD FORMAT
+        // Use cleaner format that's easier for n8n to parse
+        const payload = {
+            messages: [{
+                from: customerPhone,
+                text: {
+                    body: `ORDER_NOTIFICATION:${JSON.stringify({
+                        orderId: orderData.orderId,
+                        customerName: orderData.customerName || 'Valued Customer',
+                        customerPhone: customerPhone,
+                        customerEmail: orderData.customerEmail || 'Not provided',
+                        items: orderData.items.map(item => ({
+                            name: item.name,
+                            quantity: item.quantity,
+                            price: item.price,
+                            productId: item.productId,
+                            variations: item.variations || null,
+                            category: item.category || null,
+                            subtotal: (item.quantity * item.price).toFixed(2)
+                        })),
+                        total: parseFloat(orderData.total),
+                        deliveryAddress: orderData.deliveryAddress,
+                        deliveryMethod: orderData.deliveryMethod,
+                        driver: orderData.driver,
+                        isUrgent: orderData.isUrgent,
+                        isPaid: orderData.isPaid,
+                        orderDate: orderData.orderDate,
+                        paymentStatus: orderData.paymentStatus || 'pending',
+                        orderStatus: orderData.orderStatus || 'awaiting_confirmation'
+                    })}`
+                }
+            }],
+            // Add metadata for debugging
+            _metadata: {
+                source: 'website_cart',
+                timestamp: new Date().toISOString(),
+                customerSource: 'supabase_customers_table',
+                retryAttempt: retryCount + 1
+            }
+        };
+
+        console.log('📤 Sending payload to:', N8N_WEBHOOK_URL);
+        console.log('📊 Payload size:', JSON.stringify(payload).length, 'characters');
+
+        // ENHANCED FETCH WITH TIMEOUT
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+        const response = await fetch(N8N_WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'User-Agent': 'AutoLab-Website/1.0'
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        console.log('📥 Response status:', response.status);
+        console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
+
+        // Get response text for debugging
+        let responseText = '';
+        try {
+            responseText = await response.text();
+            console.log('📥 Response body:', responseText);
+        } catch (textError) {
+            console.log('📥 Could not read response body:', textError.message);
+        }
+
+        if (response.ok) {
+            console.log('✅ n8n webhook called successfully!');
             
-            try {
-                console.log('🚀 Attempting to send order to n8n...');
-                console.log('📋 Webhook URL:', N8N_WEBHOOK_URL);
-                console.log('📊 Order Data:', orderData);
-                console.log('👤 Customer Data:', customerData);
-                
-                // Ensure we have a phone number - try different sources
-                let customerPhone = customerData.phone;
-                
-                if (!customerPhone || customerPhone === 'N/A' || customerPhone === null) {
-                    console.warn('⚠️ Phone number missing from customerData, trying alternative sources...');
-                    
-                    // Try to get phone from Supabase auth user
-                    try {
-                        const { data: { user }, error: authError } = await supabase.auth.getUser();
-                        if (!authError && user && user.phone) {
-                            customerPhone = user.phone;
-                            console.log('✅ Found phone from auth user:', customerPhone);
-                        }
-                    } catch (authErr) {
-                        console.warn('Could not get auth user phone:', authErr);
-                    }
-                }
-                
-                // If still no phone, use customer_id or a placeholder
-                if (!customerPhone || customerPhone === 'N/A' || customerPhone === null) {
-                    console.warn('⚠️ No phone number available, using customer ID as fallback');
-                    customerPhone = customerData.customer_id || 'UNKNOWN_PHONE';
-                }
-                
-                console.log('📱 Final phone number being used:', customerPhone);
-                
-                // Format the payload for n8n
-                const payload = {
-                    messages: [{
-                        from: customerPhone,
-                        text: {
-                            body: `ORDER_NOTIFICATION:${JSON.stringify({
-                                orderId: orderData.orderId,
-                                items: orderData.items,
-                                total: orderData.total,
-                                customerPhone: customerPhone,
-                                customerName: customerData.name || 'Unknown Customer',
-                                customerEmail: customerData.email || '',
-                                deliveryAddress: orderData.address,
-                                deliveryMethod: orderData.deliveryMethod,
-                                driver: orderData.driver,
-                                isUrgent: orderData.isUrgent,
-                                isPaid: orderData.isPaid,
-                                orderDate: orderData.orderDate
-                            })}`
-                        }
-                    }]
-                };
-                
-                console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
-                
-                const response = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                console.log('📥 Response status:', response.status);
-                console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
-                
-                // Try to get response text for debugging
-                let responseText = '';
-                try {
-                    responseText = await response.text();
-                    console.log('📥 Response body:', responseText);
-                } catch (textError) {
-                    console.log('📥 Could not read response body:', textError);
-                }
-
-                if (response.ok) {
-                    console.log('✅ n8n webhook called successfully!');
-                    return true;
-                } else {
-                    throw new Error(`Webhook failed: ${response.status} ${response.statusText} - ${responseText}`);
-                }
-            } catch (error) {
-                console.error(`❌ n8n webhook attempt ${retryCount + 1} failed:`, error);
-                
-                // Additional error details
-                if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                    console.error('🌐 Network error - check if n8n URL is correct and accessible');
-                    console.error('🔗 URL being called:', N8N_WEBHOOK_URL);
-                }
-                
-                // Retry logic with progressive delay
-                if (retryCount < MAX_RETRIES) {
-                    console.log(`🔄 Retrying webhook call... (${retryCount + 1}/${MAX_RETRIES})`);
-                    await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
-                    return sendOrderToN8n(orderData, customerData, retryCount + 1);
-                }
-                
-                console.error('💥 All n8n webhook retry attempts failed');
-                return false;
-            }
+            // Log success metrics
+            console.log('📊 Success metrics:', {
+                orderId: orderData.orderId,
+                customerPhone: customerPhone,
+                totalAmount: orderData.total,
+                itemCount: orderData.items.length,
+                attempt: retryCount + 1,
+                responseTime: 'success'
+            });
+            
+            return true;
+        } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText} - ${responseText}`);
         }
 
-        // Function to test webhook connectivity (for debugging)
-        async function testN8nConnection() {
-            try {
-                console.log('🧪 Testing n8n webhook connectivity...');
-                
-                const testResponse = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'GET' // Just test if the URL is reachable
-                });
-                
-                console.log('🧪 Test response status:', testResponse.status);
-                
-                if (testResponse.status === 404) {
-                    console.error('❌ Webhook endpoint not found - check your n8n workflow is activated and path is correct');
-                } else if (testResponse.status === 405) {
-                    console.log('✅ Webhook endpoint exists (got 405 Method Not Allowed for GET, which is expected)');
-                } else {
-                    console.log('🧪 Webhook endpoint response:', testResponse.status);
-                }
-                
-            } catch (error) {
-                console.error('❌ Cannot reach n8n webhook:', error);
-                console.error('🔍 Check if your n8n instance is running and URL is correct');
-            }
+    } catch (error) {
+        console.error(`❌ n8n webhook attempt ${retryCount + 1} failed:`, error);
+
+        // Enhanced error logging
+        if (error.name === 'AbortError') {
+            console.error('⏱️ Request timed out after 30 seconds');
+        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            console.error('🌐 Network error - check connectivity and n8n URL');
+        } else if (error.message.includes('JSON')) {
+            console.error('📋 JSON parsing error - check payload format');
         }
+
+        // Retry logic with exponential backoff
+        if (retryCount < MAX_RETRIES) {
+            const delay = RETRY_DELAYS[retryCount] || 5000;
+            console.log(`🔄 Retrying in ${delay}ms... (${retryCount + 1}/${MAX_RETRIES})`);
+            
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return sendOrderToN8n(orderData, customerData, retryCount + 1);
+        }
+
+        console.error('💥 All webhook retry attempts failed');
+        
+        // Log failure for debugging
+        console.error('📊 Failure metrics:', {
+            orderId: orderData.orderId,
+            customerPhone: customerPhone,
+            error: error.message,
+            finalAttempt: retryCount + 1,
+            totalRetries: MAX_RETRIES
+        });
+        
+        return false;
+    }
+}
+
+// UTILITY FUNCTION: Standardize phone numbers
+function standardizePhoneNumber(phone) {
+    if (!phone || phone === 'N/A') return null;
+    
+    // Remove all non-digits
+    let cleanPhone = phone.toString().replace(/\D/g, '');
+    
+    // Handle Malaysian numbers specifically
+    if (cleanPhone.startsWith('60')) {
+        // Already has country code
+        return '+' + cleanPhone;
+    } else if (cleanPhone.startsWith('0')) {
+        // Malaysian number with leading 0 - replace with country code
+        return '+60' + cleanPhone.substring(1);
+    } else if (cleanPhone.length >= 9 && cleanPhone.length <= 11) {
+        // Assume Malaysian number without country code
+        return '+60' + cleanPhone;
+    }
+    
+    // Default: add + if missing
+    return phone.startsWith('+') ? phone : '+' + cleanPhone;
+}
+
+// ENHANCED CONNECTION TEST FUNCTION
+async function testN8nConnection() {
+    try {
+        console.log('🧪 Testing n8n webhook connectivity...');
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const testResponse = await fetch(N8N_WEBHOOK_URL, {
+            method: 'GET',
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log('🧪 Test response status:', testResponse.status);
+        
+        if (testResponse.status === 404) {
+            console.error('❌ Webhook endpoint not found - check n8n workflow is activated');
+            return false;
+        } else if (testResponse.status === 405) {
+            console.log('✅ Webhook endpoint exists (405 Method Not Allowed is expected for GET)');
+            return true;
+        } else if (testResponse.status >= 200 && testResponse.status < 300) {
+            console.log('✅ Webhook endpoint responding normally');
+            return true;
+        } else {
+            console.warn(`⚠️ Unexpected response: ${testResponse.status}`);
+            return false;
+        }
+        
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            console.error('❌ Connection test timed out - n8n may be unreachable');
+        } else {
+            console.error('❌ Cannot reach n8n webhook:', error.message);
+        }
+        console.error('🔍 Check: 1) n8n is running, 2) workflow is activated, 3) URL is correct');
+        return false;
+    }
+}
 
         // Global variables
         let cartItems = [];
@@ -1292,7 +1401,7 @@
                 dropdown.classList.toggle('active');
             }
         }
-        
+
         // Set up event listeners
         function setupEventListeners() {
             // Checkout button
@@ -1351,24 +1460,24 @@
                 }
 
                 // ===== FETCH CUSTOMER DATA FIRST =====
-                
+
                 // Debug customer phone number
                 console.log('🔍 Debug - User object:', user);
                 console.log('🔍 Debug - User phone from session:', user.phone);
-                
+
                 // Get fresh customer data from database to ensure we have the phone number
                 const { data: freshCustomerData, error: customerFetchError } = await supabase
                     .from('customers')
                     .select('phone, name, email, customer_id')
                     .eq('id', user.id)
                     .single();
-                
+
                 if (customerFetchError) {
                     console.error('Error fetching fresh customer data:', customerFetchError);
                 } else {
                     console.log('🔍 Fresh customer data from DB:', freshCustomerData);
                 }
-                
+
                 // Use fresh data if available, fallback to session data
                 const customerDataForN8n = freshCustomerData || user;
 
@@ -1460,32 +1569,38 @@
                 }
 
                 // ===== n8n INTEGRATION - SEND WHATSAPP NOTIFICATION =====
-                
-                // Prepare data for n8n
+
+                // Prepare detailed data for n8n with all order information
                 const orderDataForN8n = {
                     orderId: orderIdValue,
+                    customerName: customerDataForN8n.name || user.name || 'Customer',
+                    customerPhone: customerDataForN8n.phone || user.phone || 'N/A',
+                    customerEmail: customerDataForN8n.email || user.email || 'Not provided',
                     items: selectedItems.map(item => ({
                         name: item.product.name,
                         quantity: item.quantity,
                         price: item.product.price,
                         productId: item.product.product_id || item.product.id,
                         variations: item.product.variations || null,
-                        category: item.product.category || null
+                        category: item.product.category || null,
+                        subtotal: (item.quantity * item.product.price).toFixed(2)
                     })),
                     total: selectedTotal,
-                    address: checkoutData.deliveryAddress,
+                    deliveryAddress: checkoutData.deliveryAddress,
                     deliveryMethod: checkoutData.deliveryMethod,
                     driver: checkoutData.driver,
                     isUrgent: checkoutData.isUrgent,
                     isPaid: false, // Always false initially - payment after WhatsApp confirmation
-                    orderDate: new Date().toISOString()
+                    orderDate: new Date().toISOString(),
+                    paymentStatus: 'pending',
+                    orderStatus: 'awaiting_confirmation'
                 };
 
-                        // Send notification to n8n (non-blocking)
-        console.log('🚀 Sending purchase notification to n8n...');
-        console.log('🔍 Customer data being sent:', customerDataForN8n);
-        const n8nSuccess = await sendOrderToN8n(orderDataForN8n, customerDataForN8n);
-                
+                // Send notification to n8n (non-blocking)
+                console.log('🚀 Sending purchase notification to n8n...');
+                console.log('🔍 Customer data being sent:', customerDataForN8n);
+                const n8nSuccess = await sendOrderToN8n(orderDataForN8n, customerDataForN8n);
+
                 if (!n8nSuccess) {
                     console.warn('⚠️ Failed to send WhatsApp notification, but order was placed successfully');
                     // Don't fail the entire checkout process if WhatsApp notification fails
@@ -1533,11 +1648,11 @@
                 successMessage += `📋 Order ID: ${orderIdValue}\n`;
                 successMessage += `🚚 Delivery: ${checkoutData.deliveryMethod.replace('_', ' ').toUpperCase()}\n`;
                 successMessage += `👨‍💼 Assigned to: ${checkoutData.driver}\n`;
-                
+
                 if (checkoutData.isUrgent) {
                     successMessage += '🚨 This order is marked as URGENT\n';
                 }
-                
+
                 successMessage += '\n💳 Payment will be required after WhatsApp confirmation.';
 
                 alert(successMessage);
