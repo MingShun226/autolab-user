@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Add Supabase client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <title>Autolabs - Customer Login</title>
     <style>
@@ -56,6 +55,20 @@
             margin-bottom: 30px;
         }
 
+        .whatsapp-notice {
+            background-color: #e8f5e8;
+            border: 1px solid #d4edda;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #155724;
+        }
+
+        .whatsapp-notice strong {
+            color: #0f5132;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -79,6 +92,23 @@
         .form-group input:focus {
             outline: none;
             border-color: #e21b1b;
+        }
+
+        .phone-input-container {
+            position: relative;
+        }
+
+        .phone-prefix {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 14px;
+        }
+
+        .phone-input {
+            padding-left: 50px !important;
         }
 
         .remember-forgot {
@@ -150,32 +180,17 @@
             display: none;
         }
 
-        .back-link {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #666;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        .success-message {
+            color: #28a745;
             font-size: 14px;
-        }
-
-        .back-link:hover {
-            color: #e21b1b;
+            margin-top: 5px;
+            display: none;
         }
 
         @media (max-width: 480px) {
             .login-container {
                 padding: 30px 20px;
                 margin: 20px;
-            }
-
-            .back-link {
-                position: static;
-                margin-bottom: 20px;
-                justify-content: center;
             }
         }
     </style>
@@ -193,11 +208,22 @@
 
         <div class="portal-label">Customer Portal Login</div>
 
+        <!-- WhatsApp Integration Notice -->
+        <div class="whatsapp-notice">
+            <strong>📱 WhatsApp Sync:</strong> Login to sync your WhatsApp cart with your website account!
+        </div>
+
         <form id="loginForm">
             <div class="form-group">
-                <label for="phone">Phone Number</label>
-                <input type="tel" id="phone" name="phone" required placeholder="Enter your phone number">
+                <label for="phone">Phone Number (Malaysia)</label>
+                <div class="phone-input-container">
+                    <span class="phone-prefix">+60</span>
+                    <input type="tel" id="phone" name="phone" class="phone-input" required 
+                           placeholder="123456789" pattern="[0-9]{8,10}"
+                           title="Enter your Malaysian phone number without country code">
+                </div>
                 <div class="error-message" id="phoneError">Please enter your phone number</div>
+                <div class="success-message" id="phoneSuccess">Phone format is correct</div>
             </div>
 
             <div class="form-group">
@@ -211,10 +237,10 @@
                     <input type="checkbox" id="remember" name="remember">
                     <label for="remember">Remember me</label>
                 </div>
-                <a href="customer-reset-password.html" class="forgot-password" id="forgotPassword">Forgot Password?</a>
+                <a href="#" class="forgot-password" id="forgotPassword">Forgot Password?</a>
             </div>
 
-            <button type="submit" class="btn-login">Login</button>
+            <button type="submit" class="btn-login">Login & Sync Cart</button>
         </form>
 
         <div class="signup-link">
@@ -228,11 +254,82 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid2ltanZxcHl4d2hvdmlodGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjAwMDksImV4cCI6MjA2MDk5NjAwOX0._D3wackPNKg-IbiswH7M-3wqeQRP6ujMmcJ9bb7_1z0';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
+        // n8n Webhook for WhatsApp cart linking
+        const N8N_WEBHOOK_URL = 'https://apipietech.app.n8n.cloud/webhook-test/customer-login';
+
+        // Function to standardize phone number for Malaysia
+        function standardizePhoneNumber(phone) {
+            let cleaned = phone.replace(/\D/g, '');
+            if (cleaned.startsWith('0')) {
+                cleaned = cleaned.substring(1);
+            }
+            if (cleaned.startsWith('60')) {
+                cleaned = cleaned.substring(2);
+            }
+            return cleaned;
+        }
+
+        // Function to notify n8n about login for WhatsApp cart linking
+        async function notifyN8nLogin(customerData) {
+            try {
+                console.log('🔗 Notifying n8n about login for cart linking...');
+                
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        event: 'customer_login',
+                        customer_id: customerData.customer_id,
+                        name: customerData.name,
+                        email: customerData.email,
+                        phone: customerData.phone,
+                        user_id: customerData.id,
+                        timestamp: new Date().toISOString(),
+                        action: 'link_whatsapp_cart'
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('✅ n8n notified successfully for cart linking');
+                    return true;
+                } else {
+                    console.log('⚠️ n8n notification failed, but login successful');
+                    return false;
+                }
+            } catch (error) {
+                console.log('⚠️ n8n notification error:', error.message);
+                return false;
+            }
+        }
+
+        // Phone input validation
+        document.getElementById('phone').addEventListener('input', function() {
+            const phone = this.value;
+            const cleanPhone = standardizePhoneNumber(phone);
+            const phoneError = document.getElementById('phoneError');
+            const phoneSuccess = document.getElementById('phoneSuccess');
+            
+            phoneError.style.display = 'none';
+            phoneSuccess.style.display = 'none';
+            
+            if (cleanPhone.length >= 8 && cleanPhone.length <= 10 && /^\d+$/.test(cleanPhone)) {
+                phoneSuccess.style.display = 'block';
+                this.style.borderColor = '#28a745';
+            } else if (phone.length > 0) {
+                phoneError.textContent = 'Enter 8-10 digits for Malaysian phone number';
+                phoneError.style.display = 'block';
+                this.style.borderColor = '#e21b1b';
+            } else {
+                this.style.borderColor = '#ddd';
+            }
+        });
+        
         // Check if user is already logged in
         window.addEventListener('load', async function () {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                // Get customer details from the database
                 const { data: customerData, error: customerError } = await supabase
                     .from('customers')
                     .select('*')
@@ -240,10 +337,9 @@
                     .single();
 
                 if (customerData) {
-                    // Store customer info in session
                     sessionStorage.setItem('currentUser', JSON.stringify({
                         id: user.id,
-                        phone: user.phone,
+                        phone: customerData.phone,
                         email: customerData.email,
                         name: customerData.name,
                         address: customerData.address,
@@ -251,28 +347,10 @@
                         type: 'customer'
                     }));
 
-                                             // Send login event to n8n webhook (optional)
-                         try {
-                             await fetch('https://subapipie.app.n8n.cloud/webhook-test/order-placed', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                event: 'customer_login',
-                                customer_id: customerData.customer_id,
-                                name: customerData.name,
-                                phone: user.phone,
-                                timestamp: new Date().toISOString()
-                            })
-                        });
-                    } catch (webhookError) {
-                        console.log('Webhook notification failed:', webhookError);
-                        // Don't block login if webhook fails
-                    }
+                    // Notify n8n for cart linking (non-blocking)
+                    await notifyN8nLogin(customerData);
 
-                    // Redirect to customer dashboard
-                    window.location.href="catalog.html"
+                    window.location.href = "catalog.html";
                 }
             }
         });
@@ -281,8 +359,10 @@
         document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            const phone = document.getElementById('phone').value;
+            const phoneInput = document.getElementById('phone').value.trim();
             const password = document.getElementById('password').value;
+
+            console.log('🔑 Starting login process...');
 
             // Reset error messages
             document.querySelectorAll('.error-message').forEach(el => {
@@ -292,7 +372,13 @@
             let isValid = true;
 
             // Phone validation
-            if (!phone) {
+            const cleanPhone = standardizePhoneNumber(phoneInput);
+            if (!phoneInput) {
+                document.getElementById('phoneError').textContent = 'Please enter your phone number';
+                document.getElementById('phoneError').style.display = 'block';
+                isValid = false;
+            } else if (cleanPhone.length < 8 || cleanPhone.length > 10 || !/^\d+$/.test(cleanPhone)) {
+                document.getElementById('phoneError').textContent = 'Please enter a valid Malaysian phone number';
                 document.getElementById('phoneError').style.display = 'block';
                 isValid = false;
             }
@@ -305,73 +391,87 @@
 
             if (isValid) {
                 try {
-                    // Sign in with Supabase Auth - find user by phone in database
-                    // First, find the user by phone number in the database
+                    console.log('📞 Looking up customer by phone:', cleanPhone);
+                    
+                    // Find customer by standardized phone number
                     const { data: userData, error: dbError } = await supabase
                         .from('customers')
-                        .select('email')
-                        .eq('phone', phone)
+                        .select('email, id, name, phone, address, customer_id')
+                        .eq('phone', cleanPhone)
                         .single();
                     
                     if (dbError || !userData) {
-                        throw new Error('Phone number not found');
+                        console.log('❌ Customer not found for phone:', cleanPhone);
+                        throw new Error('Phone number not found. Please check your phone number or register first.');
                     }
                     
-                    // Then sign in with email
+                    console.log('✅ Customer found:', userData.customer_id);
+                    
+                    // Sign in with email and password
                     const { data: { user }, error } = await supabase.auth.signInWithPassword({
                         email: userData.email,
                         password: password
                     });
 
-                    if (error) throw error;
+                    if (error) {
+                        console.log('❌ Auth error:', error);
+                        throw error;
+                    }
 
                     if (user) {
-                        // Get customer details from the database
-                        const { data: customerData, error: customerError } = await supabase
-                            .from('customers')
-                            .select('*')
-                            .eq('id', user.id)
-                            .single();
-
-                        if (customerError) throw customerError;
-
-                        // Store customer info in session
-                        sessionStorage.setItem('currentUser', JSON.stringify({
+                        console.log('✅ Authentication successful');
+                        
+                        // Store customer info in session with standardized phone
+                        const customerSession = {
                             id: user.id,
-                            phone: user.phone,
-                            email: customerData.email,
-                            name: customerData.name,
-                            address: customerData.address,
-                            customer_id: customerData.customer_id,
+                            phone: userData.phone, // Already standardized in database
+                            email: userData.email,
+                            name: userData.name,
+                            address: userData.address,
+                            customer_id: userData.customer_id,
                             type: 'customer'
-                        }));
+                        };
+                        
+                        sessionStorage.setItem('currentUser', JSON.stringify(customerSession));
 
-                        // Send login event to n8n webhook (optional)
-                        try {
-                            await fetch('https://subapipie.app.n8n.cloud/webhook-test/order-placed', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    event: 'customer_login',
-                                    customer_id: customerData.customer_id,
-                                    name: customerData.name,
-                                    phone: user.phone,
-                                    timestamp: new Date().toISOString()
-                                })
-                            });
-                        } catch (webhookError) {
-                            console.log('Webhook notification failed:', webhookError);
-                            // Don't block login if webhook fails
+                        console.log('💾 Session data stored');
+
+                        // Notify n8n for WhatsApp cart linking (non-blocking)
+                        const linkingNotified = await notifyN8nLogin(userData);
+                        
+                        // Success message
+                        let successMessage = '🎉 Login successful!\n\n';
+                        successMessage += '✅ Welcome back, ' + userData.name + '\n';
+                        successMessage += '📱 Phone: +60' + userData.phone + '\n';
+                        
+                        if (linkingNotified) {
+                            successMessage += '🔗 WhatsApp cart sync initiated\n';
+                            successMessage += '📦 Any WhatsApp cart items will be synced\n\n';
                         }
-
-                        // Redirect to customer dashboard
-                        window.location.href="catalog.html"
+                        
+                        successMessage += 'Redirecting to catalog...';
+                        
+                        // Show success message briefly, then redirect
+                        alert(successMessage);
+                        
+                        console.log('🔄 Redirecting to catalog...');
+                        window.location.href = "catalog.html";
                     }
                 } catch (error) {
-                    console.error('Error signing in:', error);
-                    alert('Invalid phone number or password');
+                    console.error('💥 Login error:', error);
+                    
+                    let errorMessage = '';
+                    if (error.message.includes('Phone number not found')) {
+                        errorMessage = 'Phone number not found. Please register first or check your phone number.';
+                    } else if (error.message.includes('Invalid login credentials')) {
+                        errorMessage = 'Invalid password. Please check your password.';
+                    } else if (error.message.includes('Email not confirmed')) {
+                        errorMessage = 'Please confirm your email address before logging in.';
+                    } else {
+                        errorMessage = 'Login failed: ' + error.message;
+                    }
+                    
+                    alert(errorMessage);
                 }
             }
         });
@@ -380,25 +480,43 @@
         document.getElementById('forgotPassword').addEventListener('click', async function (e) {
             e.preventDefault();
 
-            const phone = document.getElementById('phone').value;
+            const phoneInput = document.getElementById('phone').value.trim();
 
-            if (!phone) {
+            if (!phoneInput) {
                 document.getElementById('phoneError').textContent = 'Please enter your phone number to reset password';
                 document.getElementById('phoneError').style.display = 'block';
                 return;
             }
 
+            const cleanPhone = standardizePhoneNumber(phoneInput);
+
             try {
-                const { error } = await supabase.auth.resetPasswordForPhone(phone, {
+                console.log('🔄 Looking up email for password reset...');
+                
+                // Find email by phone number
+                const { data: userData, error: dbError } = await supabase
+                    .from('customers')
+                    .select('email')
+                    .eq('phone', cleanPhone)
+                    .single();
+                
+                if (dbError || !userData) {
+                    alert('Phone number not found. Please check your phone number or register first.');
+                    return;
+                }
+
+                // Send password reset email
+                const { error } = await supabase.auth.resetPasswordForEmail(userData.email, {
                     redirectTo: window.location.origin + '/customer-reset-password.html',
                 });
 
                 if (error) throw error;
 
-                alert('Password reset SMS sent. Please check your inbox.');
+                alert('Password reset email sent to ' + userData.email + '. Please check your inbox.');
+                
             } catch (error) {
-                console.error('Error sending password reset SMS:', error);
-                alert('Failed to send password reset SMS. Please try again.');
+                console.error('❌ Password reset error:', error);
+                alert('Failed to send password reset email. Please try again.');
             }
         });
     </script>
