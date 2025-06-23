@@ -140,13 +140,6 @@
             top: -5px;
         }
 
-        .original-status {
-            font-size: 12px;
-            margin-left: 8px;
-            color: #777;
-            font-style: italic;
-        }
-
         .dropdown-menu {
             position: absolute;
             top: 45px;
@@ -240,39 +233,69 @@
             font-weight: 500;
         }
 
-        .status-verifying {
-            background-color: #e8f0fe;
-            color: #4285F4;
+        /* New Status Badge Styles */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
         }
 
-        .status-processing {
-            background-color: #e8f0fe;
-            color: #4285F4;
+        .awaiting-confirmation {
+            background-color: #fff2e8;
+            color: #fa541c;
         }
 
-        .status-prepared {
-            background-color: #fef7e0;
-            color: #FBBC05;
+        .pending-payment {
+            background-color: #e6f7ff;
+            color: #1890ff;
         }
 
-        .status-shipping {
-            background-color: #fef7e0;
-            color: #FBBC05;
+        .pending-confirmation {
+            background-color: #f9f0ff;
+            color: #722ed1;
         }
 
-        .status-delivered {
-            background-color: #e6f4ea;
-            color: #34A853;
+        .processing {
+            background-color: #e6f7ff;
+            color: #1890ff;
         }
 
-        .status-cancel {
+        .prepared {
+            background-color: #fff7e6;
+            color: #fa8c16;
+        }
+
+        .delivering {
+            background-color: #f2f0ff;
+            color: #531dab;
+        }
+
+        .delivered {
+            background-color: #f6ffed;
+            color: #52c41a;
+        }
+
+        .cancelled {
+            background-color: #fff1f0;
+            color: #f5222d;
+        }
+
+        .status-badge.urgent {
             background-color: #ffeeee;
             color: #EA4335;
         }
 
-        .status-onhold {
-            background-color: #f3f3f3;
-            color: #757575;
+        .status-badge.paid {
+            background-color: #f6ffed;
+            color: #52c41a;
+        }
+
+        .status-badge.unpaid {
+            background-color: #fff1f0;
+            color: #f5222d;
         }
 
         .order-details {
@@ -561,19 +584,6 @@
             background-color: #c41818;
         }
 
-        .original-status {
-            font-size: 12px;
-            margin-left: 8px;
-            color: #777;
-            font-style: italic;
-            background-color: #f8f8f8;
-            padding: 3px 6px;
-            border-radius: 4px;
-            border-left: 2px solid #d9d9d9;
-            display: inline-block;
-            vertical-align: middle;
-        }
-
         /* Print Invoice Button */
         .print-invoice-btn {
             padding: 6px 12px;
@@ -680,89 +690,6 @@
             cursor: pointer;
         }
 
-        /* Edit mode styles */
-        .edit-mode {
-            border: 2px solid #4285F4 !important;
-            background-color: #f8f9fa;
-        }
-
-        .edit-btn,
-        .save-btn,
-        .cancel-btn {
-            padding: 6px 12px;
-            font-size: 13px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-left: 10px;
-        }
-
-        .edit-btn {
-            background-color: #f0f8ff;
-            color: #1890ff;
-            border: 1px solid #d9d9d9;
-        }
-
-        .save-btn {
-            background-color: #e6f7ff;
-            color: #1890ff;
-            border: 1px solid #d9d9d9;
-        }
-
-        .cancel-btn {
-            background-color: #f5f5f5;
-            color: #777;
-            border: 1px solid #d9d9d9;
-        }
-
-        .edit-controls {
-            display: none;
-            margin-top: 15px;
-            padding: 15px;
-            background-color: #f0f8ff;
-            border-radius: 8px;
-            border: 1px solid #d9e8ff;
-        }
-
-        .edit-controls.active {
-            display: block;
-        }
-
-        .control-group {
-            margin-bottom: 15px;
-        }
-
-        .control-label {
-            display: block;
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
-
-        .control-input {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        .editable-quantity {
-            width: 60px;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        .edit-row {
-            background-color: #f0f8ff;
-        }
-
         .urgent-flag {
             display: inline-block;
             padding: 3px 8px;
@@ -772,80 +699,6 @@
             font-size: 12px;
             font-weight: 500;
             margin-left: 10px;
-        }
-
-        /* Submit overlay styles */
-        .edit-overlay {
-            display: none;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.6);
-        }
-
-        .edit-confirmation {
-            background-color: white;
-            margin: 15% auto;
-            padding: 30px;
-            width: 400px;
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-            text-align: center;
-        }
-
-        .confirmation-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .confirmation-message {
-            font-size: 15px;
-            color: #555;
-            margin-bottom: 25px;
-            line-height: 1.5;
-        }
-
-        .confirmation-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .confirm-btn,
-        .cancel-confirm-btn {
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-
-        .confirm-btn {
-            background-color: #4285F4;
-            color: white;
-            border: none;
-        }
-
-        .cancel-confirm-btn {
-            background-color: #f5f5f5;
-            color: #555;
-            border: 1px solid #ddd;
-        }
-
-        /* Success message */
-        .success-message {
-            display: none;
-            padding: 15px;
-            background-color: #e6f4ea;
-            color: #34A853;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
         }
 
         /* Responsive styles */
@@ -864,7 +717,6 @@
                 width: 100%;
             }
 
-            /* Rest of the existing mobile styles remain unchanged */
             .track-search-container {
                 padding: 15px;
                 margin-bottom: 20px;
@@ -885,7 +737,6 @@
                 border-radius: 8px;
             }
 
-            /* Orders section mobile styles */
             .order-meta {
                 flex-direction: column;
                 gap: 15px;
@@ -918,17 +769,11 @@
                 gap: 10px;
             }
 
-            .print-invoice-btn,
-            .edit-btn {
+            .print-invoice-btn {
                 font-size: 12px;
                 padding: 4px 8px;
             }
 
-            .edit-confirmation {
-                width: 90%;
-            }
-
-            /* Table responsive styles */
             .items-table {
                 display: block;
                 overflow-x: auto;
@@ -1083,12 +928,6 @@
             </div>
         </div>
 
-        <!-- Success Message -->
-        <div class="success-message" id="successMessage">
-            Your order edit request has been submitted and is now being verified. An administrator will review your
-            changes shortly.
-        </div>
-
         <!-- Track Order Search Box -->
         <div class="track-search-container">
             <div class="track-title">Track Your Order</div>
@@ -1141,31 +980,75 @@
         </div>
     </div>
 
-    <!-- Edit Confirmation Overlay -->
-    <div id="editOverlay" class="edit-overlay">
-        <div class="edit-confirmation">
-            <div class="confirmation-title">Confirm Order Changes</div>
-            <div class="confirmation-message">
-                Are you sure you want to submit these changes? After submission, your order will enter a verification
-                status until an administrator approves the modifications.
-            </div>
-            <div class="confirmation-buttons">
-                <button id="confirmEditBtn" class="confirm-btn">Yes, Submit Changes</button>
-                <button id="cancelConfirmBtn" class="cancel-confirm-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Supabase configuration
         // Supabase configuration
         const supabaseUrl = 'https://bbwimjvqpyxwhovihtfm.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid2ltanZxcHl4d2hvdmlodGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjAwMDksImV4cCI6MjA2MDk5NjAwOX0._D3wackPNKg-IbiswH7M-3wqeQRP6ujMmcJ9bb7_1z0';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Store for editable orders and their original state
-        const editableOrders = {};
-        const originalOrderData = {};
+        // ===== SINGLE STATUS DISPLAY FUNCTION (replaces all complex status logic) =====
+        function getOrderStatusDisplay(order) {
+            const statusConfig = {
+                'awaiting_confirmation': { 
+                    class: 'awaiting-confirmation', 
+                    text: 'Awaiting WhatsApp Confirmation', 
+                    icon: '📱',
+                    color: '#fa8c16',
+                    adminVisible: false  // Hidden from admin until confirmed
+                },
+                'pending_payment': { 
+                    class: 'pending-payment', 
+                    text: 'Confirmed - Pending Payment', 
+                    icon: '💳',
+                    color: '#1890ff',
+                    adminVisible: true
+                },
+                'pending_confirmation': { 
+                    class: 'pending-confirmation', 
+                    text: 'Paid - Pending Admin Approval', 
+                    icon: '⏳',
+                    color: '#722ed1',
+                    adminVisible: true
+                },
+                'processing': { 
+                    class: 'processing', 
+                    text: 'Processing', 
+                    icon: '⚙️',
+                    color: '#1890ff',
+                    adminVisible: true
+                },
+                'prepared': { 
+                    class: 'prepared', 
+                    text: 'Prepared for Delivery', 
+                    icon: '📦',
+                    color: '#fa8c16',
+                    adminVisible: true
+                },
+                'delivering': { 
+                    class: 'delivering', 
+                    text: 'Out for Delivery', 
+                    icon: '🚚',
+                    color: '#531dab',
+                    adminVisible: true
+                },
+                'delivered': { 
+                    class: 'delivered', 
+                    text: 'Delivered', 
+                    icon: '✅',
+                    color: '#52c41a',
+                    adminVisible: true
+                },
+                'cancelled': { 
+                    class: 'cancelled', 
+                    text: 'Cancelled', 
+                    icon: '❌',
+                    color: '#f5222d',
+                    adminVisible: true
+                }
+            };
+            
+            return statusConfig[order.status] || statusConfig['processing'];
+        }
 
         document.addEventListener('DOMContentLoaded', async function () {
             // Check user authentication
@@ -1275,14 +1158,15 @@
             }
         }
 
-        // Load user's orders
+        // ===== SIMPLIFIED LOAD USER ORDERS FUNCTION =====
         async function loadUserOrders(userId) {
             try {
-                // Fetch orders for this user
+                // Fetch orders for this user, excluding awaiting_confirmation (hidden until confirmed)
                 const { data: orders, error } = await supabase
                     .from('orders')
                     .select('*')
                     .eq('customer_id', userId)
+                    .neq('status', 'awaiting_confirmation')  // Hide unconfirmed orders
                     .order('order_date', { ascending: false });
 
                 if (error) {
@@ -1299,19 +1183,7 @@
                     emptyOrdersState.style.display = 'block';
                     return;
                 }
-                for (let i = 0; i < orders.length; i++) {
-                    if (orders[i].status === 'verifying') {
-                        const { data: pendingEdit, error: pendingError } = await supabase
-                            .from('pendingedit')
-                            .select('original_status')
-                            .eq('orders_id', orders[i].id)
-                            .single();
 
-                        if (!pendingError && pendingEdit) {
-                            orders[i].original_status = pendingEdit.original_status;
-                        }
-                    }
-                }
                 // Hide empty state and show orders
                 ordersContainer.style.display = 'block';
                 emptyOrdersState.style.display = 'none';
@@ -1319,28 +1191,13 @@
                 // Clear existing orders
                 ordersContainer.innerHTML = '';
 
-                // Process and display each order
+                // Process and display each order with simplified logic
                 for (const order of orders) {
-                    // Determine if the order is editable
-                    // Orders should NOT be editable if:
-                    // 1. They are delivered (delivered_on is not null)
-                    // 2. They are canceled (status === 'cancel')
-                    // 3. They are already in verification (status === 'verifying')
-                    const isEditable = !order.delivered_on &&
-                        order.status !== 'cancel' &&
-                        order.status !== 'verifying';
-
-                    // Store original order data if editable
-                    if (isEditable) {
-                        originalOrderData[order.id] = { ...order };
-                    }
-
-                    // Create order card (editable or non-editable)
-                    const orderCard = createOrderCard(order, isEditable);
+                    const orderCard = createSimplifiedOrderCard(order);
                     ordersContainer.appendChild(orderCard);
 
                     // Fetch order items
-                    fetchOrderItems(order.id, order.order_id, isEditable);
+                    fetchOrderItems(order.id, order.order_id);
 
                     // Automatically expand the first order
                     if (orders.indexOf(order) === 0) {
@@ -1353,8 +1210,9 @@
                 console.error('Error:', error);
             }
         }
-        // Create order card element
-        function createOrderCard(order, isEditable) {
+
+        // ===== SIMPLIFIED ORDER CARD CREATION (removes all edit functionality) =====
+        function createSimplifiedOrderCard(order) {
             const orderDate = new Date(order.order_date);
             const formattedDate = orderDate.toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -1362,243 +1220,156 @@
                 day: 'numeric'
             });
 
-            // Determine order status - fixed for proper case sensitivity and all possible values
-            let statusClass, statusText;
-
-            // Standardize the status to lowercase for comparison
-            const statusLower = order.status ? order.status.toLowerCase() : '';
-
-            // Check for timestamp-based statuses first
-            if (order.delivered_on) {
-                statusClass = 'status-delivered';
-                statusText = 'Delivered';
-            } else if (order.depart_on) {
-                statusClass = 'status-shipping';
-                statusText = 'Out for Delivery';
-            } else if (order.prepared_on && statusLower !== 'verifying' && statusLower !== 'cancel' && statusLower !== 'cancelled' && statusLower !== 'on hold') {
-                statusClass = 'status-prepared';
-                statusText = 'Prepared';
-            } else {
-                // If no timestamps or status takes precedence, use the status field
-                switch (statusLower) {
-                    case 'processing':
-                        statusClass = 'status-processing';
-                        statusText = 'Processing';
-                        break;
-                    case 'cancel':
-                    case 'cancelled':  // Handle both spellings
-                        statusClass = 'status-cancel';
-                        statusText = 'Cancelled';
-                        break;
-                    case 'onhold':
-                    case 'on hold':    // Handle both formats
-                        statusClass = 'status-onhold';
-                        statusText = 'On Hold';
-                        break;
-                    case 'verifying':
-                        statusClass = 'status-verifying';
-                        statusText = 'Verifying';
-                        break;
-                    case 'delivering':
-                        statusClass = 'status-shipping';
-                        statusText = 'Delivering';
-                        break;
-                    case 'prepared':
-                        statusClass = 'status-prepared';
-                        statusText = 'Prepared';
-                        break;
-                    default:
-                        // Default to processing if no recognized status
-                        statusClass = 'status-processing';
-                        statusText = 'Processing';
-                }
-            }
-
-            // Generate random delivery estimate (3-7 days from order date)
-            const estimateDays = Math.floor(Math.random() * 5) + 3; // Random between 3-7
-            const estimateDate = new Date(orderDate);
-            estimateDate.setDate(estimateDate.getDate() + estimateDays);
-            const formattedEstimate = estimateDate.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
+            // Use the single status display function
+            const statusInfo = getOrderStatusDisplay(order);
 
             // Create order card element
             const orderCard = document.createElement('div');
             orderCard.className = 'order-card';
             orderCard.innerHTML = `
-    <div class="order-header" onclick="toggleOrderDetails('${order.order_id}')">
-        <div class="order-title-section">
-            <div style="display: flex; align-items: center;">
-                <div class="toggle-btn" id="toggle-${order.order_id}">▼</div>
-                <div class="order-title">Order #${order.order_id}</div>
-                ${order.is_urgent ? '<span class="urgent-flag">URGENT</span>' : ''}
-            </div>
-            <div class="order-date" style="padding-left:50px">Placed on ${formattedDate}</div>
-        </div>
-        <div class="order-status-container">
-            <span class="order-status ${statusClass}" id="status-badge-${order.order_id}">${statusText}</span>
-            ${order.original_status ? `<span class="original-status">${order.original_status.charAt(0).toUpperCase() + order.original_status.slice(1)}</span>` : ''}
-            <button class="print-invoice-btn" onclick="printInvoice('${order.id}', event)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                    <rect x="6" y="14" width="12" height="8"></rect>
-                </svg>
-                Print Invoice
-            </button>
-            ${isEditable ? `
-            <button class="edit-btn" id="edit-btn-${order.order_id}" onclick="startEditing('${order.id}', '${order.order_id}', event)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-                Edit Order
-            </button>
-            ` : ''}
-        </div>
-    </div>
-        <div class="order-details" id="details-${order.order_id}">
-            <div class="order-meta">
-                <div class="meta-item">
-                    <div class="meta-label">Total Amount</div>
-                    <div class="meta-value">RM ${order.amount.toFixed(2)}</div>
+                <div class="order-header" onclick="toggleOrderDetails('${order.order_id}')">
+                    <div class="order-title-section">
+                        <div style="display: flex; align-items: center;">
+                            <div class="toggle-btn" id="toggle-${order.order_id}">▼</div>
+                            <div class="order-title">Order #${order.order_id}</div>
+                            ${order.is_urgent ? '<span class="urgent-flag">URGENT</span>' : ''}
+                        </div>
+                        <div class="order-date" style="padding-left:50px">Placed on ${formattedDate}</div>
+                    </div>
+                    <div class="order-status-container">
+                        <span class="order-status ${statusInfo.class}">${statusInfo.icon} ${statusInfo.text}</span>
+                        ${order.is_urgent ? '<span class="status-badge urgent">🚨 Urgent</span>' : ''}
+                        <span class="status-badge ${order.payment_status}">${order.payment_status}</span>
+                        <button class="print-invoice-btn" onclick="printInvoice('${order.id}', event)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                <rect x="6" y="14" width="12" height="8"></rect>
+                            </svg>
+                            Print Invoice
+                        </button>
+                    </div>
                 </div>
-                <div class="meta-item">
-                    <div class="meta-label">Payment Status</div>
-                    <div class="meta-value">${order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}</div>
-                </div>
-                <div class="meta-item">
-                    <div class="meta-label">Delivery Address</div>
-                    <div class="meta-value">${order.address}</div>
-                </div>
-                <div class="meta-item">
-                    <div class="meta-label">Driver</div>
-                    <div class="meta-value" id="driver-value-${order.order_id}">${order.driver}</div>
-                </div>
-            </div>
+                <div class="order-details" id="details-${order.order_id}">
+                    <div class="order-meta">
+                        <div class="meta-item">
+                            <div class="meta-label">Total Amount</div>
+                            <div class="meta-value">RM ${order.amount.toFixed(2)}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Payment Status</div>
+                            <div class="meta-value">${order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Delivery Address</div>
+                            <div class="meta-value">${order.address}</div>
+                        </div>
+                        <div class="meta-item">
+                            <div class="meta-label">Driver</div>
+                            <div class="meta-value">${order.driver}</div>
+                        </div>
+                    </div>
 
-           ${isEditable ? `
-    <div class="edit-controls" id="edit-controls-${order.order_id}">
-        <div class="control-group">
-            <div class="control-label">Order Status</div>
-            <select class="control-input" id="status-select-${order.order_id}">
-                <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
-                <option value="cancel" ${order.status === 'cancel' ? 'selected' : ''}>Cancel</option>
-                <option value="onhold" ${order.status === 'onhold' ? 'selected' : ''}>On Hold</option>
-            </select>
-        </div>
-        <div class="control-group">
-            <div class="control-label">Delivery Driver</div>
-            <select class="control-input" id="driver-select-${order.order_id}" data-original-driver="${order.driver}">
-                <option value="driver (kl/selangor)" ${order.driver.includes('driver') ? 'selected' : ''}>Driver (KL/Selangor)</option>
-                <option value="lalamove" ${order.driver === 'lalamove' ? 'selected' : ''}>Lalamove</option>
-                <option value="selfpickup" ${order.driver === 'selfpickup' ? 'selected' : ''}>Self Pickup</option>
-            </select>
-        </div>
-        <div class="control-group">
-            <label class="control-label">
-                <input type="checkbox" id="urgent-checkbox-${order.order_id}" ${order.is_urgent ? 'checked' : ''}>
-                Mark as Urgent
-            </label>
-        </div>
-        <div style="margin-top: 20px; display: flex; gap: 10px;">
-            <button class="save-btn" id="save-btn-${order.order_id}" onclick="saveEdits('${order.id}', '${order.order_id}', event)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                    <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-                Save Changes
-            </button>
-            <button class="cancel-btn" onclick="cancelEditing('${order.id}', '${order.order_id}', event)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-                Cancel
-            </button>
-        </div>
-    </div>
-    ` : ''}
-            <div class="tracking-title">Order Tracking</div>
-            <div class="tracking-timeline">
-                <div class="timeline-line"></div>
-                
-                <!-- Order Received Event -->
-                <div class="timeline-event">
-                    <div class="event-dot completed"></div>
-                    <div class="event-content">
-                        <div class="event-title">Order Received</div>
-                        <div class="event-description">Your order has been received and is being verified.</div>
+                    <div class="tracking-title">Order Tracking</div>
+                    <div class="tracking-timeline">
+                        <div class="timeline-line"></div>
+                        
+                        <!-- Order Received Event -->
+                        <div class="timeline-event">
+                            <div class="event-dot completed"></div>
+                            <div class="event-content">
+                                <div class="event-title">Order Received</div>
+                                <div class="event-description">Your order has been received and confirmed.</div>
+                            </div>
+                            <div class="event-time">
+                                ${formatDateTime(order.confirmed_at || order.order_date)}
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Event -->
+                        <div class="timeline-event">
+                            <div class="event-dot ${order.paid_at ? 'completed' : ''}"></div>
+                            <div class="event-content">
+                                <div class="event-title">Payment Complete</div>
+                                <div class="event-description">Payment has been processed successfully.</div>
+                            </div>
+                            <div class="event-time">
+                                ${order.paid_at ? formatDateTime(order.paid_at) : 'Pending'}
+                            </div>
+                        </div>
+                        
+                        <!-- Admin Approval Event -->
+                        <div class="timeline-event">
+                            <div class="event-dot ${order.approved_at ? 'completed' : ''}"></div>
+                            <div class="event-content">
+                                <div class="event-title">Order Approved</div>
+                                <div class="event-description">Your order has been approved and is being prepared.</div>
+                            </div>
+                            <div class="event-time">
+                                ${order.approved_at ? formatDateTime(order.approved_at) : 'Pending'}
+                            </div>
+                        </div>
+                        
+                        <!-- Prepared Event -->
+                        <div class="timeline-event">
+                            <div class="event-dot ${order.prepared_at ? 'completed' : ''}"></div>
+                            <div class="event-content">
+                                <div class="event-title">Order Prepared</div>
+                                <div class="event-description">Your order has been prepared and is ready for shipping.</div>
+                            </div>
+                            <div class="event-time">
+                                ${order.prepared_at ? formatDateTime(order.prepared_at) : 'Pending'}
+                            </div>
+                        </div>
+                        
+                        <!-- Out for Delivery Event -->
+                        <div class="timeline-event">
+                            <div class="event-dot ${order.dispatched_at ? 'completed' : ''}"></div>
+                            <div class="event-content">
+                                <div class="event-title">Out for Delivery</div>
+                                <div class="event-description">Your order is on its way to the delivery address.</div>
+                            </div>
+                            <div class="event-time">
+                                ${order.dispatched_at ? formatDateTime(order.dispatched_at) : 'Pending'}
+                            </div>
+                        </div>
+                        
+                        <!-- Delivered Event -->
+                        <div class="timeline-event">
+                            <div class="event-dot ${order.delivered_at ? 'completed' : ''}"></div>
+                            <div class="event-content">
+                                <div class="event-title">Delivered</div>
+                                <div class="event-description">Your order has been delivered.</div>
+                            </div>
+                            <div class="event-time">
+                                ${order.delivered_at ? formatDateTime(order.delivered_at) : 'Pending'}
+                            </div>
+                        </div>
                     </div>
-                    <div class="event-time">
-                        ${formatDateTime(order.order_date)}
-                    </div>
-                </div>
-                
-                <!-- Prepared Event -->
-                <div class="timeline-event">
-                    <div class="event-dot ${order.prepared_on ? 'completed' : ''}"></div>
-                    <div class="event-content">
-                        <div class="event-title">Order Prepared</div>
-                        <div class="event-description">Your order has been prepared and is ready for shipping.</div>
-                    </div>
-                    <div class="event-time">
-                        ${order.prepared_on ? formatDateTime(order.prepared_on) : 'Pending'}
-                    </div>
-                </div>
-                
-                <!-- Out for Delivery Event -->
-                <div class="timeline-event">
-                    <div class="event-dot ${order.depart_on ? 'completed' : ''}"></div>
-                    <div class="event-content">
-                        <div class="event-title">Out for Delivery</div>
-                        <div class="event-description">Your order is on its way to the delivery address.</div>
-                    </div>
-                    <div class="event-time">
-                        ${order.depart_on ? formatDateTime(order.depart_on) : 'Pending'}
-                    </div>
-                </div>
-                
-                <!-- Delivered Event -->
-                <div class="timeline-event">
-                    <div class="event-dot ${order.delivered_on ? 'completed' : ''}"></div>
-                    <div class="event-content">
-                        <div class="event-title">Delivered</div>
-                        <div class="event-description">Your order has been delivered.</div>
-                    </div>
-                    <div class="event-time">
-                        ${order.delivered_on ? formatDateTime(order.delivered_on) : 'Pending'}
-                    </div>
-                </div>
-            </div>
 
-            <!-- Order Items section -->
-            <div class="order-items">
-                <div class="items-title">Ordered Items</div>
-                <table class="items-table" id="items-${order.order_id}">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Price</th>
-                            <th>Quantity</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Order items will be dynamically inserted here -->
-                        <tr>
-                            <td colspan="4" style="text-align: center; padding: 20px;">
-                                Loading order items...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
+                    <!-- Order Items section -->
+                    <div class="order-items">
+                        <div class="items-title">Ordered Items</div>
+                        <table class="items-table" id="items-${order.order_id}">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px;">
+                                        Loading order items...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
 
             return orderCard;
         }
@@ -1634,21 +1405,21 @@
             }
         }
 
-        // Fetch order items for a specific order
-        async function fetchOrderItems(orderId, orderIdDisplay, isEditable) {
+        // ===== SIMPLIFIED FETCH ORDER ITEMS (removes edit functionality) =====
+        async function fetchOrderItems(orderId, orderIdDisplay) {
             try {
                 // Fetch order items
                 const { data: orderItems, error } = await supabase
                     .from('order_products')
                     .select(`
-                id,
-                product_id,
-                quantity,
-                unit_price,
-                variations,
-                category,
-                 products (name, product_id, image_url)
-            `)
+                        id,
+                        product_id,
+                        quantity,
+                        unit_price,
+                        variations,
+                        category,
+                        products (name, product_id, image_url)
+                    `)
                     .eq('order_id', orderId);
 
                 if (error) {
@@ -1656,36 +1427,27 @@
                     return;
                 }
 
-                // Store order items for editing
-                if (isEditable) {
-                    if (!editableOrders[orderId]) {
-                        editableOrders[orderId] = {};
-                    }
-                    editableOrders[orderId].items = [...orderItems];
-                }
-
-                // Get the table body for this order
                 const itemsTable = document.getElementById(`items-${orderIdDisplay}`);
-                if (!itemsTable) return; // Safety check
+                if (!itemsTable) return;
 
                 const tableBody = itemsTable.querySelector('tbody');
-                if (!tableBody) return; // Safety check
+                if (!tableBody) return;
 
                 // Clear loading message
                 tableBody.innerHTML = '';
 
                 if (!orderItems || orderItems.length === 0) {
                     tableBody.innerHTML = `
-                <tr>
-                    <td colspan="4" style="text-align: center; padding: 20px;">
-                        No items found for this order.
-                    </td>
-                </tr>
-            `;
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 20px;">
+                                No items found for this order.
+                            </td>
+                        </tr>
+                    `;
                     return;
                 }
 
-                // Add each item to the table
+                // Add each item to the table (no edit controls)
                 orderItems.forEach(item => {
                     const totalPrice = item.unit_price * item.quantity;
                     const productName = item.products ? item.products.name : 'Unknown Product';
@@ -1693,37 +1455,31 @@
                     const variations = item.variations && item.variations !== 'null' ? item.variations : '';
 
                     const row = document.createElement('tr');
-                    row.className = `item-row-${item.id}`;
                     row.innerHTML = `
-                <td>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                       <div class="item-image">
-                            ${item.products && item.products.image_url ?
-                            `<img src="${item.products.image_url}" alt="${item.products.name}" style="max-width: 100%; max-height: 100%; object-fit: contain;">` :
-                            `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
-                                stroke="#999" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <circle cx="12" cy="12" r="6"></circle>
-                                <circle cx="12" cy="12" r="2"></circle>
-                            </svg>`
-                        }
-                        </div>
-                        <div>
-                            <div class="item-name">${productName}</div>
-                            <div class="item-sku">${productId}</div>
-                            <div class="item-sku">${variations}</div>
-                        </div>
-                    </div>
-                </td>
-                <td class="item-price">RM ${item.unit_price.toFixed(2)}</td>
-                <td>
-                    ${isEditable ?
-                            `<input type="number" min="1" max="999" class="editable-quantity" id="quantity-${item.id}" 
-                         value="${item.quantity}" onchange="updateItemQuantity('${orderId}', '${item.id}', this.value)">`
-                            : item.quantity}
-                </td>
-                <td class="item-price" id="total-${item.id}">RM ${totalPrice.toFixed(2)}</td>
-            `;
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="item-image">
+                                    ${item.products && item.products.image_url ?
+                                        `<img src="${item.products.image_url}" alt="${item.products.name}" style="max-width: 100%; max-height: 100%; object-fit: contain;">` :
+                                        `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
+                                            stroke="#999" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <circle cx="12" cy="12" r="6"></circle>
+                                            <circle cx="12" cy="12" r="2"></circle>
+                                        </svg>`
+                                    }
+                                </div>
+                                <div>
+                                    <div class="item-name">${productName}</div>
+                                    <div class="item-sku">${productId}</div>
+                                    <div class="item-sku">${variations}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="item-price">RM ${item.unit_price.toFixed(2)}</td>
+                        <td>${item.quantity}</td>
+                        <td class="item-price">RM ${totalPrice.toFixed(2)}</td>
+                    `;
 
                     tableBody.appendChild(row);
                 });
@@ -1733,534 +1489,145 @@
             }
         }
 
-        // Start editing an order
-        function startEditing(orderId, orderIdDisplay, event) {
-            // Prevent event propagation and detail toggle
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-
-            // Expand details if not already expanded
-            const detailsElem = document.getElementById(`details-${orderIdDisplay}`);
-            if (!detailsElem) return; // Safety check
-
-            const toggleBtn = document.getElementById(`toggle-${orderIdDisplay}`);
-            if (!toggleBtn) return; // Safety check
-
-            if (!detailsElem.classList.contains('expanded')) {
-                detailsElem.classList.add('expanded');
-                toggleBtn.classList.add('expanded');
-            }
-
-            // Add edit mode class to order card
-            const orderCard = detailsElem.closest('.order-card');
-            if (!orderCard) return; // Safety check
-
-            orderCard.classList.add('edit-mode');
-
-            // Show edit controls
-            const editControls = document.getElementById(`edit-controls-${orderIdDisplay}`);
-            if (editControls) {
-                editControls.classList.add('active');
-            }
-
-            // Hide edit button
-            const editBtn = document.getElementById(`edit-btn-${orderIdDisplay}`);
-            if (editBtn) {
-                editBtn.style.display = 'none';
-            }
-        }
-
-        // Cancel editing
-        function cancelEditing(orderId, orderIdDisplay, event) {
-            // Prevent event propagation
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-
-            // Remove edit mode class
-            const detailsElem = document.getElementById(`details-${orderIdDisplay}`);
-            if (!detailsElem) return; // Safety check
-
-            const orderCard = detailsElem.closest('.order-card');
-            if (!orderCard) return; // Safety check
-
-            orderCard.classList.remove('edit-mode');
-
-            // Hide edit controls
-            const editControls = document.getElementById(`edit-controls-${orderIdDisplay}`);
-            if (editControls) {
-                editControls.classList.remove('active');
-            }
-
-            // Show edit button
-            const editBtn = document.getElementById(`edit-btn-${orderIdDisplay}`);
-            if (editBtn) {
-                editBtn.style.display = 'inline-flex';
-            }
-
-            // Reset form values and quantities back to original
-            resetOrderToOriginal(orderId, orderIdDisplay);
-        }
-
-        // Reset order to original values
-        function resetOrderToOriginal(orderId, orderIdDisplay) {
-            // Get original data
-            const originalOrder = originalOrderData[orderId];
-            if (!originalOrder) return;
-
-            // Reset status
-            const statusSelect = document.getElementById(`status-select-${orderIdDisplay}`);
-            if (statusSelect) {
-                statusSelect.value = originalOrder.status;
-            }
-
-            // Reset driver
-            const driverSelect = document.getElementById(`driver-select-${orderIdDisplay}`);
-            if (driverSelect) {
-                driverSelect.value = originalOrder.driver;
-            }
-
-            // Reset urgent flag
-            const urgentCheckbox = document.getElementById(`urgent-checkbox-${orderIdDisplay}`);
-            if (urgentCheckbox) {
-                urgentCheckbox.checked = originalOrder.is_urgent;
-            }
-
-            // Reset quantities
-            const originalItems = editableOrders[orderId] && editableOrders[orderId].items;
-            if (originalItems) {
-                originalItems.forEach(item => {
-                    const quantityInput = document.getElementById(`quantity-${item.id}`);
-                    if (quantityInput) {
-                        quantityInput.value = item.quantity;
-                    }
-
-                    // Update total price display
-                    const totalElem = document.getElementById(`total-${item.id}`);
-                    if (totalElem) {
-                        const totalPrice = item.unit_price * item.quantity;
-                        totalElem.textContent = `RM ${totalPrice.toFixed(2)}`;
-                    }
-                });
-            }
-        }
-
-        // Update item quantity
-        function updateItemQuantity(orderId, itemId, newQuantity) {
-            // Find the item in the editable orders
-            const orderItems = editableOrders[orderId] && editableOrders[orderId].items;
-            if (!orderItems) return;
-
-            const itemIndex = orderItems.findIndex(item => item.id.toString() === itemId.toString());
-
-            if (itemIndex !== -1) {
-                // Update quantity
-                const parsedQuantity = parseInt(newQuantity, 10);
-                let finalQuantity = parsedQuantity;
-
-                if (isNaN(parsedQuantity) || parsedQuantity < 1) {
-                    // Reset to 1 if invalid
-                    finalQuantity = 1;
-                    const quantityInput = document.getElementById(`quantity-${itemId}`);
-                    if (quantityInput) {
-                        quantityInput.value = 1;
-                    }
-                }
-
-                // Update order items array
-                orderItems[itemIndex].quantity = finalQuantity;
-
-                // Update total price display
-                const item = orderItems[itemIndex];
-                const totalElem = document.getElementById(`total-${itemId}`);
-                if (totalElem) {
-                    const totalPrice = item.unit_price * item.quantity;
-                    totalElem.textContent = `RM ${totalPrice.toFixed(2)}`;
-                }
-            }
-        }
-
-        // Save edits to database
-        function saveEdits(orderId, orderIdDisplay, event) {
-            // Prevent event propagation
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-
-            // Show confirmation overlay
-            const overlay = document.getElementById('editOverlay');
-            if (overlay) {
-                overlay.style.display = 'block';
-            }
-
-            // Store current order ID and display ID for confirmation handler
-            window.currentEditOrderId = orderId;
-            window.currentEditOrderIdDisplay = orderIdDisplay;
-        }
-
-        // Handle confirmation of edits
-        // Handle confirmation of edits
-        // Handle confirmation of edits
-        // Handle confirmation of edits
-        async function confirmEdits(orderId, orderIdDisplay) {
-            try {
-                // Collect edited data
-                const statusSelect = document.getElementById(`status-select-${orderIdDisplay}`);
-                const driverSelect = document.getElementById(`driver-select-${orderIdDisplay}`);
-                const urgentCheckbox = document.getElementById(`urgent-checkbox-${orderIdDisplay}`);
-
-                if (!statusSelect || !driverSelect || !urgentCheckbox) {
-                    console.error('Missing form elements for editing');
-                    return false;
-                }
-
-                // Get edited items
-                const editedItems = editableOrders[orderId] && editableOrders[orderId].items;
-                if (!editedItems || editedItems.length === 0) {
-                    console.error('No edited items found');
-                    return false;
-                }
-
-                if (!originalOrderData[orderId]) {
-                    console.error('Original order data not found');
-                    return false;
-                }
-
-                // Special handling for driver selection
-                let finalDriverValue;
-                const selectedDriverValue = driverSelect.value;
-                const originalDriverValue = driverSelect.getAttribute('data-original-driver');
-
-                // Handle the driver selection scenarios
-                if (selectedDriverValue === 'driver (kl/selangor)') {
-                    if (originalDriverValue.includes('driver')) {
-                        // Scenario 1: If original driver was already a driver type, keep the original driver
-                        finalDriverValue = originalDriverValue;
-                    } else {
-                        // Scenario 2: If changing from non-driver (like selfpickup) to driver, randomly select driver 1 or 2
-                        const randomDriver = Math.random() < 0.5 ? 'Driver 1' : 'Driver 2';
-                        finalDriverValue = randomDriver;
-                    }
-                } else {
-                    // For other selections (lalamove, selfpickup), use the selected value directly
-                    finalDriverValue = selectedDriverValue;
-                }
-
-                // Step 1: Update the order status to "verifying" in the orders table
-                const { error: updateError } = await supabase
-                    .from('orders')
-                    .update({ status: 'verifying' })
-                    .eq('id', orderId);
-
-                if (updateError) {
-                    console.error('Error updating order status:', updateError);
-                    alert('Failed to update order status. Please try again.');
-                    return false;
-                }
-
-                // Step 2: Store the requested changes in the pendingedit table
-                // Including the requested status change (cancel, onhold, etc.)
-                const pendingEdit = {
-                    orders_id: orderId,
-                    orders_address: originalOrderData[orderId].address,
-                    orders_driver: finalDriverValue, // Use the processed driver value
-                    orders_status: statusSelect.value, // Storing the requested status (cancel, onhold, etc.)
-                    orders_is_urgent: urgentCheckbox.checked,
-                    order_products_id: editedItems[0].id,
-                    order_products_quantity: editedItems[0].quantity,
-                    order_products_variations: editedItems[0].variations || null,
-                    original_status: originalOrderData[orderId].status
-                };
-
-                // Insert into pending_edits table
-                const { data, error } = await supabase
-                    .from('pendingedit')
-                    .insert(pendingEdit);
-
-                if (error) {
-                    console.error('Error saving edit:', error);
-                    alert('There was an issue saving your edit details, but your order has been marked for verification. An administrator will contact you if needed.');
-                    return true;
-                }
-
-                // Step 3: Update the UI to show "Verifying" status
-                const statusBadge = document.getElementById(`status-badge-${orderIdDisplay}`);
-                if (statusBadge) {
-                    statusBadge.className = 'order-status status-verifying';
-                    statusBadge.textContent = 'Verifying';
-                }
-
-                return true;
-            } catch (error) {
-                console.error('Error confirming edits:', error);
-                alert('An unexpected error occurred. Please try again.');
-                return false;
-            }
-        }
         // Print invoice function
-// Modify the printInvoice function in myorder.html
-async function printInvoice(orderId, event) {
-    // Prevent event propagation
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    }
+        async function printInvoice(orderId, event) {
+            // Prevent event propagation
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
 
-    try {
-        // Find the modal element
-        const invoiceModal = document.getElementById('invoiceModal');
-        const invoiceBody = document.getElementById('invoiceBody');
+            try {
+                // Find the modal element
+                const invoiceModal = document.getElementById('invoiceModal');
+                const invoiceBody = document.getElementById('invoiceBody');
 
-        if (!invoiceModal || !invoiceBody) {
-            console.error('Invoice modal elements not found');
-            return;
-        }
-
-        // Show loading
-        invoiceBody.innerHTML = `
-            <div style="text-align: center; padding: 30px;">
-                <div class="loading-spinner" style="display: inline-block; border: 4px solid rgba(0, 0, 0, 0.1); border-radius: 50%; border-top: 4px solid #e21b1b; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
-                <p>Loading invoice...</p>
-            </div>
-            <style>
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
+                if (!invoiceModal || !invoiceBody) {
+                    console.error('Invoice modal elements not found');
+                    return;
                 }
-            </style>
-        `;
 
-        // Display the modal
-        invoiceModal.style.display = 'block';
-
-        // Fetch order details
-        const { data: order, error: orderError } = await supabase
-            .from('orders')
-            .select('*, customers(name)')
-            .eq('id', orderId)
-            .single();
-
-        if (orderError) {
-            console.error('Error fetching order:', orderError);
-            invoiceBody.innerHTML = `<p style="color: red; text-align: center;">Error loading order details.</p>`;
-            return;
-        }
-
-        // Check if order is in "verifying" status
-        if (order.status === 'verifying') {
-            invoiceBody.innerHTML = `
-                <div style="text-align: center; padding: 30px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#e21b1b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <h3 style="margin-top: 15px; color: #333;">Invoice Not Available</h3>
-                    <p style="margin-top: 10px; color: #666;">This order is currently being verified. Invoices cannot be printed during verification.</p>
-                    <button id="closeInvoiceBtn" class="print-invoice-btn" style="margin-top: 20px; background-color: #f5f5f5; color: #333; padding: 8px 16px; border-radius: 4px; border: 1px solid #d9d9d9; cursor: pointer;">
-                        Close
-                    </button>
-                </div>
-            `;
-            
-            // Add event listener to close button
-            document.getElementById('closeInvoiceBtn').addEventListener('click', closeInvoiceModal);
-            return;
-        }
-
-        // Fetch order items
-        const { data: orderItems, error: itemsError } = await supabase
-            .from('order_products')
-            .select('*, products(name, product_id)')
-            .eq('order_id', orderId);
-
-        if (itemsError) {
-            console.error('Error fetching order items:', itemsError);
-            invoiceBody.innerHTML = `<p style="color: red; text-align: center;">Error loading order items.</p>`;
-            return;
-        }
-
-        // Format date
-        const orderDate = new Date(order.order_date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-
-        // Define payment terms based on payment status
-        const paymentTerms = order.payment_status === 'paid' 
-            ? '<strong>Term: </strong>Cash / <span style="text-decoration: line-through;">Credit</span>' 
-            : '<strong>Term: </strong><span style="text-decoration: line-through;">Cash</span> / Credit';
-
-        // Build invoice items HTML
-        let itemsHtml = '';
-        let orderTotal = 0;
-        let counter = 1;
-
-        orderItems.forEach(item => {
-            const productName = item.products ? item.products.name : 'Unknown Product';
-            const productId = item.products ? item.products.product_id : 'Unknown ID';
-            const unitPrice = item.unit_price || 0;
-            const quantity = item.quantity || 0;
-            const itemTotal = unitPrice * quantity;
-            orderTotal += itemTotal;
-            const variations = item.variations && item.variations !== 'null' ? item.variations : 'N/A';
-
-            itemsHtml += `
-                <tr>
-                    <td style="font-size: 9px; padding: 2px 3px;">${counter}</td>
-                    <td style="font-size: 9px; padding: 2px 3px;">${productId}</td>
-                    <td style="font-size: 9px; padding: 2px 3px;">${productName}</td>
-                    <td style="font-size: 9px; text-align: center; padding: 2px 3px;">${quantity}</td>
-                    <td style="font-size: 9px; text-align: center; padding: 2px 3px;">${variations}</td>
-                    <td style="font-size: 9px; text-align: right; padding: 2px 3px;">RM ${unitPrice.toFixed(2)}</td>
-                    <td style="font-size: 9px; text-align: center; padding: 2px 3px;"></td>
-                    <td style="font-size: 9px; text-align: right; padding: 2px 3px;">RM ${itemTotal.toFixed(2)}</td>
-                </tr>
-            `;
-            counter++;
-        });
-
-        // Fill empty rows if needed (to ensure consistent placement at bottom)
-        const fillerRows = Math.max(0, 12 - orderItems.length); // Assuming 12 rows would fill a page
-        for (let i = 0; i < fillerRows; i++) {
-            itemsHtml += `
-                <tr>
-                    <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
-                    <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
-                    <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
-                    <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
-                    <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
-                    <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
-                    <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
-                    <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
-                </tr>
-            `;
-        }
-
-        // Generate full invoice HTML
-        const invoiceHtml = `
-            <div style="padding: 10px; font-family: Arial, sans-serif; width: 100%; height: 99vh; margin: 0 auto; font-size: 9px; display: flex; flex-direction: column;">
-                <!-- Top Section -->
-                <div style="flex: 0 0 auto;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                        <div>
-                            <h2 style="margin: 0; font-size: 16px;">AUTO LABS SDN BHD</h2>
-                            <p style="margin: 2px 0; font-size: 9px;">No. 12, Jalan UTM</p>
-                            <p style="margin: 2px 0; font-size: 9px;">Skudai, Johor, 77998</p>
-                            <p style="margin: 2px 0; font-size: 9px;">Tel: 07-5550-1735</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="border: 1px solid #000; padding: 5px 15px; display: inline-block;">
-                                <h2 style="margin: 0; text-align: center; font-size: 14px;">INVOICE</h2>
-                                <p style="margin: 3px 0; font-size: 9px;"><strong>No: </strong>INV-${order.order_id.replace('ORD', '')}</p>
-                            </div>
-                            <p style="margin: 5px 0 2px; font-size: 9px;"><strong>Date: </strong>${orderDate}</p>
-                            <p style="margin: 2px 0; font-size: 9px;"><strong>A/C Code: </strong>DMKT78C</p>
-                            <p style="margin: 2px 0; font-size: 9px;">${paymentTerms}</p>
-                            <p style="margin: 2px 0; font-size: 9px;"><strong>Salesman: </strong>TECH</p>
-                            <p style="margin: 2px 0; font-size: 9px;"><strong>Served By: </strong>HTL</p>
-                        </div>
+                // Show loading
+                invoiceBody.innerHTML = `
+                    <div style="text-align: center; padding: 30px;">
+                        <div class="loading-spinner" style="display: inline-block; border: 4px solid rgba(0, 0, 0, 0.1); border-radius: 50%; border-top: 4px solid #e21b1b; width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
+                        <p>Loading invoice...</p>
                     </div>
+                    <style>
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    </style>
+                `;
+
+                // Display the modal
+                invoiceModal.style.display = 'block';
+
+                // Fetch order details
+                const { data: order, error: orderError } = await supabase
+                    .from('orders')
+                    .select('*, customers(name)')
+                    .eq('id', orderId)
+                    .single();
+
+                if (orderError) {
+                    console.error('Error fetching order:', orderError);
+                    invoiceBody.innerHTML = `<p style="color: red; text-align: center;">Error loading order details.</p>`;
+                    return;
+                }
+
+                // Check if order is in "awaiting_confirmation" status
+                if (order.status === 'awaiting_confirmation') {
+                    invoiceBody.innerHTML = `
+                        <div style="text-align: center; padding: 30px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#e21b1b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <h3 style="margin-top: 15px; color: #333;">Invoice Not Available</h3>
+                            <p style="margin-top: 10px; color: #666;">This order is awaiting confirmation. Invoices cannot be printed for unconfirmed orders.</p>
+                            <button id="closeInvoiceBtn" class="print-invoice-btn" style="margin-top: 20px; background-color: #f5f5f5; color: #333; padding: 8px 16px; border-radius: 4px; border: 1px solid #d9d9d9; cursor: pointer;">
+                                Close
+                            </button>
+                        </div>
+                    `;
                     
-                    <div style="margin-bottom: 10px;">
-                        <p style="margin: 2px 0; font-size: 9px;"><strong>Bill To: </strong>${order.customers ? order.customers.name : 'Customer'}</p>
-                        <p style="margin: 2px 0; font-size: 9px;">${order.address || 'No address provided'}</p>
-                        <p style="margin: 2px 0; font-size: 9px;"><strong>Attention: </strong>${order.customers ? order.customers.name : 'Customer'}</p>
-                        <p style="margin: 2px 0; font-size: 9px;"><strong>Tel: </strong>${order.phone_number || 'N/A'}</p>
-                    </div>
-                </div>
-                
-                <!-- Middle Section (Table) - This will take available space -->
-                <div style="flex: 1 1 auto; display: flex; flex-direction: column;">
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 5px;">
+                    // Add event listener to close button
+                    document.getElementById('closeInvoiceBtn').addEventListener('click', closeInvoiceModal);
+                    return;
+                }
+
+                // Fetch order items
+                const { data: orderItems, error: itemsError } = await supabase
+                    .from('order_products')
+                    .select('*, products(name, product_id)')
+                    .eq('order_id', orderId);
+
+                if (itemsError) {
+                    console.error('Error fetching order items:', itemsError);
+                    invoiceBody.innerHTML = `<p style="color: red; text-align: center;">Error loading order items.</p>`;
+                    return;
+                }
+
+                // Format date
+                const orderDate = new Date(order.order_date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                // Define payment terms based on payment status
+                const paymentTerms = order.payment_status === 'paid' 
+                    ? '<strong>Term: </strong>Cash / <span style="text-decoration: line-through;">Credit</span>' 
+                    : '<strong>Term: </strong><span style="text-decoration: line-through;">Cash</span> / Credit';
+
+                // Build invoice items HTML
+                let itemsHtml = '';
+                let orderTotal = 0;
+                let counter = 1;
+
+                orderItems.forEach(item => {
+                    const productName = item.products ? item.products.name : 'Unknown Product';
+                    const productId = item.products ? item.products.product_id : 'Unknown ID';
+                    const unitPrice = item.unit_price || 0;
+                    const quantity = item.quantity || 0;
+                    const itemTotal = unitPrice * quantity;
+                    orderTotal += itemTotal;
+                    const variations = item.variations && item.variations !== 'null' ? item.variations : 'N/A';
+
+                    itemsHtml += `
                         <tr>
-                            <td colspan="8" style="border-top: 1px solid #000; padding: 0;"></td>
+                            <td style="font-size: 9px; padding: 2px 3px;">${counter}</td>
+                            <td style="font-size: 9px; padding: 2px 3px;">${productId}</td>
+                            <td style="font-size: 9px; padding: 2px 3px;">${productName}</td>
+                            <td style="font-size: 9px; text-align: center; padding: 2px 3px;">${quantity}</td>
+                            <td style="font-size: 9px; text-align: center; padding: 2px 3px;">${variations}</td>
+                            <td style="font-size: 9px; text-align: right; padding: 2px 3px;">RM ${unitPrice.toFixed(2)}</td>
+                            <td style="font-size: 9px; text-align: center; padding: 2px 3px;"></td>
+                            <td style="font-size: 9px; text-align: right; padding: 2px 3px;">RM ${itemTotal.toFixed(2)}</td>
                         </tr>
-                        <thead>
-                            <tr>
-                                <th style="padding: 3px; text-align: left; font-size: 9px; font-weight: bold;">No.</th>
-                                <th style="padding: 3px; text-align: left; font-size: 9px; font-weight: bold;">Stock Code</th>
-                                <th style="padding: 3px; text-align: left; font-size: 9px; font-weight: bold;">Description</th>
-                                <th style="padding: 3px; text-align: center; font-size: 9px; font-weight: bold;">Qty</th>
-                                <th style="padding: 3px; text-align: center; font-size: 9px; font-weight: bold;">U.O.M</th>
-                                <th style="padding: 3px; text-align: right; font-size: 9px; font-weight: bold;">Unit Price</th>
-                                <th style="padding: 3px; text-align: right; font-size: 9px; font-weight: bold;">Discount</th>
-                                <th style="padding: 3px; text-align: right; font-size: 9px; font-weight: bold;">Amount</th>
-                            </tr>
-                        </thead>
+                    `;
+                    counter++;
+                });
+
+                // Fill empty rows if needed (to ensure consistent placement at bottom)
+                const fillerRows = Math.max(0, 12 - orderItems.length); // Assuming 12 rows would fill a page
+                for (let i = 0; i < fillerRows; i++) {
+                    itemsHtml += `
                         <tr>
-                            <td colspan="8" style="border-bottom: 1px solid #000; padding: 0;"></td>
+                            <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
+                            <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
+                            <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
+                            <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
+                            <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
+                            <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
+                            <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
+                            <td style="font-size: 9px; padding: 2px 3px;">&nbsp;</td>
                         </tr>
-                        <tbody>
-                            ${itemsHtml}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Bottom Section -->
-                <div style="flex: 0 0 auto;">
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 5px;">
-                        <tr>
-                            <td colspan="7" style="text-align: right; padding: 3px; font-size: 9px; font-weight: bold;">TOTAL</td>
-                            <td style="text-align: right; padding: 3px; font-size: 9px; font-weight: bold; border-top: 1px solid #000;">RM ${orderTotal.toFixed(2)}</td>
-                        </tr>
-                    </table>
-                    
-                    <div style="margin-top: 5px;">
-                        <hr style="border-top: 1px solid #000; border-bottom: none; margin: 0;">
-                        <p style="font-size: 10px; margin: 5px 0; font-weight: bold;">RINGGIT MALAYSIA ${convertToWords(orderTotal)} ONLY</p>
-                        <p style="font-size: 9px; margin-top: 5px;">Note:</p>
-                        <ol style="margin: 0; padding-left: 20px; font-size: 8px;">
-                            <li>Please issue all payment in the name of <strong>AUTO LABS SDN BHD</strong></li>
-                            <li>All items remain the property of the company until fully paid</li>
-                            <li>No return or exchange of goods after inspection</li>
-                            <li>All prices are subject to 10% service tax</li>
-                            <li>Stock borrowed for more than seven (7) days will be billed in full of <strong>AUTO LABS SDN BHD</strong></li>
-                        </ol>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                        <div>
-                            <p style="border-top: 1px solid #000; display: inline-block; padding-top: 3px; font-size: 9px;">Received By</p>
-                        </div>
-                        <div>
-                            <p style="border-top: 1px solid #000; display: inline-block; padding-top: 3px; font-size: 9px;">Company Chop & Signature</p>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 10px; font-style: italic; font-size: 8px;">
-                        <p>This is a computer generated copy.<br>No signature is required.</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="margin-top: 20px; text-align: center; display: flex; justify-content: center; gap: 10px;">
-                <button id="printInvoiceBtn" class="print-invoice-btn" style="background-color: #e6f7ff; color: #1890ff; padding: 8px 16px; border-radius: 4px; border: 1px solid #d9d9d9; cursor: pointer;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                        <rect x="6" y="14" width="12" height="8"></rect>
-                    </svg>
-                    Print Invoice
-                </button>
-                <button id="downloadInvoiceBtn" class="print-invoice-btn" style="background-color: #e6f7ff; color: #1890ff; padding: 8px 16px; border-radius: 4px; border: 1px solid #d9d9d9; cursor: pointer;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Download PDF
-                </button>
-                <button id="closeInvoiceBtn" class="print-invoice-btn" style="background-color: #f5f5f5; color: #333; padding: 8px 16px; border-radius: 4px; border: 1px solid #d9d9d9; cursor: pointer;">
-                    Close
-                </button>
-            </div>
-        `;
+                    `;
+                }
 
                 // Add function to convert number to words
                 function convertToWords(num) {
@@ -2309,6 +1676,126 @@ async function printInvoice(orderId, event) {
 
                     return result.trim();
                 }
+
+                // Generate full invoice HTML
+                const invoiceHtml = `
+                    <div style="padding: 10px; font-family: Arial, sans-serif; width: 100%; height: 99vh; margin: 0 auto; font-size: 9px; display: flex; flex-direction: column;">
+                        <!-- Top Section -->
+                        <div style="flex: 0 0 auto;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <div>
+                                    <h2 style="margin: 0; font-size: 16px;">AUTO LABS SDN BHD</h2>
+                                    <p style="margin: 2px 0; font-size: 9px;">No. 12, Jalan UTM</p>
+                                    <p style="margin: 2px 0; font-size: 9px;">Skudai, Johor, 77998</p>
+                                    <p style="margin: 2px 0; font-size: 9px;">Tel: 07-5550-1735</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="border: 1px solid #000; padding: 5px 15px; display: inline-block;">
+                                        <h2 style="margin: 0; text-align: center; font-size: 14px;">INVOICE</h2>
+                                        <p style="margin: 3px 0; font-size: 9px;"><strong>No: </strong>INV-${order.order_id.replace('ORD', '')}</p>
+                                    </div>
+                                    <p style="margin: 5px 0 2px; font-size: 9px;"><strong>Date: </strong>${orderDate}</p>
+                                    <p style="margin: 2px 0; font-size: 9px;"><strong>A/C Code: </strong>DMKT78C</p>
+                                    <p style="margin: 2px 0; font-size: 9px;">${paymentTerms}</p>
+                                    <p style="margin: 2px 0; font-size: 9px;"><strong>Salesman: </strong>TECH</p>
+                                    <p style="margin: 2px 0; font-size: 9px;"><strong>Served By: </strong>HTL</p>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <p style="margin: 2px 0; font-size: 9px;"><strong>Bill To: </strong>${order.customers ? order.customers.name : 'Customer'}</p>
+                                <p style="margin: 2px 0; font-size: 9px;">${order.address || 'No address provided'}</p>
+                                <p style="margin: 2px 0; font-size: 9px;"><strong>Attention: </strong>${order.customers ? order.customers.name : 'Customer'}</p>
+                                <p style="margin: 2px 0; font-size: 9px;"><strong>Tel: </strong>${order.phone_number || 'N/A'}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Middle Section (Table) - This will take available space -->
+                        <div style="flex: 1 1 auto; display: flex; flex-direction: column;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 5px;">
+                                <tr>
+                                    <td colspan="8" style="border-top: 1px solid #000; padding: 0;"></td>
+                                </tr>
+                                <thead>
+                                    <tr>
+                                        <th style="padding: 3px; text-align: left; font-size: 9px; font-weight: bold;">No.</th>
+                                        <th style="padding: 3px; text-align: left; font-size: 9px; font-weight: bold;">Stock Code</th>
+                                        <th style="padding: 3px; text-align: left; font-size: 9px; font-weight: bold;">Description</th>
+                                        <th style="padding: 3px; text-align: center; font-size: 9px; font-weight: bold;">Qty</th>
+                                        <th style="padding: 3px; text-align: center; font-size: 9px; font-weight: bold;">U.O.M</th>
+                                        <th style="padding: 3px; text-align: right; font-size: 9px; font-weight: bold;">Unit Price</th>
+                                        <th style="padding: 3px; text-align: right; font-size: 9px; font-weight: bold;">Discount</th>
+                                        <th style="padding: 3px; text-align: right; font-size: 9px; font-weight: bold;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tr>
+                                    <td colspan="8" style="border-bottom: 1px solid #000; padding: 0;"></td>
+                                </tr>
+                                <tbody>
+                                    ${itemsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Bottom Section -->
+                        <div style="flex: 0 0 auto;">
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 5px;">
+                                <tr>
+                                    <td colspan="7" style="text-align: right; padding: 3px; font-size: 9px; font-weight: bold;">TOTAL</td>
+                                    <td style="text-align: right; padding: 3px; font-size: 9px; font-weight: bold; border-top: 1px solid #000;">RM ${orderTotal.toFixed(2)}</td>
+                                </tr>
+                            </table>
+                            
+                            <div style="margin-top: 5px;">
+                                <hr style="border-top: 1px solid #000; border-bottom: none; margin: 0;">
+                                <p style="font-size: 10px; margin: 5px 0; font-weight: bold;">RINGGIT MALAYSIA ${convertToWords(orderTotal)} ONLY</p>
+                                <p style="font-size: 9px; margin-top: 5px;">Note:</p>
+                                <ol style="margin: 0; padding-left: 20px; font-size: 8px;">
+                                    <li>Please issue all payment in the name of <strong>AUTO LABS SDN BHD</strong></li>
+                                    <li>All items remain the property of the company until fully paid</li>
+                                    <li>No return or exchange of goods after inspection</li>
+                                    <li>All prices are subject to 10% service tax</li>
+                                    <li>Stock borrowed for more than seven (7) days will be billed in full of <strong>AUTO LABS SDN BHD</strong></li>
+                                </ol>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                                <div>
+                                    <p style="border-top: 1px solid #000; display: inline-block; padding-top: 3px; font-size: 9px;">Received By</p>
+                                </div>
+                                <div>
+                                    <p style="border-top: 1px solid #000; display: inline-block; padding-top: 3px; font-size: 9px;">Company Chop & Signature</p>
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: center; margin-top: 10px; font-style: italic; font-size: 8px;">
+                                <p>This is a computer generated copy.<br>No signature is required.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; text-align: center; display: flex; justify-content: center; gap: 10px;">
+                        <button id="printInvoiceBtn" class="print-invoice-btn" style="background-color: #e6f7ff; color: #1890ff; padding: 8px 16px; border-radius: 4px; border: 1px solid #d9d9d9; cursor: pointer;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                <rect x="6" y="14" width="12" height="8"></rect>
+                            </svg>
+                            Print Invoice
+                        </button>
+                        <button id="downloadInvoiceBtn" class="print-invoice-btn" style="background-color: #e6f7ff; color: #1890ff; padding: 8px 16px; border-radius: 4px; border: 1px solid #d9d9d9; cursor: pointer;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download PDF
+                        </button>
+                        <button id="closeInvoiceBtn" class="print-invoice-btn" style="background-color: #f5f5f5; color: #333; padding: 8px 16px; border-radius: 4px; border: 1px solid #d9d9d9; cursor: pointer;">
+                            Close
+                        </button>
+                    </div>
+                `;
 
                 // Update modal content
                 invoiceBody.innerHTML = invoiceHtml;
@@ -2415,75 +1902,6 @@ async function printInvoice(orderId, event) {
                     }
                 });
             }
-
-            // Confirmation overlay
-            const confirmEditBtn = document.getElementById('confirmEditBtn');
-            if (confirmEditBtn) {
-                confirmEditBtn.addEventListener('click', async function () {
-                    const orderId = window.currentEditOrderId;
-                    const orderIdDisplay = window.currentEditOrderIdDisplay;
-
-                    if (orderId && orderIdDisplay) {
-                        // Show a loading state
-                        this.textContent = 'Submitting...';
-                        this.disabled = true;
-
-                        // Save the edits
-                        const success = await confirmEdits(orderId, orderIdDisplay);
-
-                        // Close the overlay
-                        const editOverlay = document.getElementById('editOverlay');
-                        if (editOverlay) {
-                            editOverlay.style.display = 'none';
-                        }
-
-                        if (success) {
-                            // Reset the form
-                            const editControls = document.getElementById(`edit-controls-${orderIdDisplay}`);
-                            if (editControls) {
-                                editControls.classList.remove('active');
-                            }
-
-                            // Remove edit mode class
-                            const orderCard = document.getElementById(`details-${orderIdDisplay}`).closest('.order-card');
-                            if (orderCard) {
-                                orderCard.classList.remove('edit-mode');
-                            }
-
-                            // Show success message
-                            const successMessage = document.getElementById('successMessage');
-                            if (successMessage) {
-                                successMessage.style.display = 'block';
-
-                                // Auto-hide the success message after 5 seconds
-                                setTimeout(() => {
-                                    successMessage.style.display = 'none';
-                                }, 5000);
-                            }
-
-                            // Show edit button again
-                            const editBtn = document.getElementById(`edit-btn-${orderIdDisplay}`);
-                            if (editBtn) {
-                                editBtn.style.display = 'inline-flex';
-                            }
-                        }
-
-                        // Reset button state
-                        this.textContent = 'Yes, Submit Changes';
-                        this.disabled = false;
-                    }
-                });
-            }
-
-            const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
-            if (cancelConfirmBtn) {
-                cancelConfirmBtn.addEventListener('click', function () {
-                    const editOverlay = document.getElementById('editOverlay');
-                    if (editOverlay) {
-                        editOverlay.style.display = 'none';
-                    }
-                });
-            }
         }
 
         // Handle logout
@@ -2509,10 +1927,6 @@ async function printInvoice(orderId, event) {
         // Make functions available globally for HTML event handlers
         window.toggleOrderDetails = toggleOrderDetails;
         window.printInvoice = printInvoice;
-        window.startEditing = startEditing;
-        window.cancelEditing = cancelEditing;
-        window.saveEdits = saveEdits;
-        window.updateItemQuantity = updateItemQuantity;
     </script>
 </body>
 

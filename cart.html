@@ -1412,256 +1412,216 @@ async function testN8nConnection() {
             }
         }
 
-        // Process checkout with enhanced UI and n8n integration
-        async function proceedToCheckout() {
-            try {
-                // Get current user
-                const userStr = sessionStorage.getItem('currentUser');
-                if (!userStr) {
-                    alert('Please log in to proceed with checkout');
-                    return;
-                }
+        // Replace the existing proceedToCheckout function in cart.html with this simplified version
 
-                const user = JSON.parse(userStr);
+async function proceedToCheckout() {
+    try {
+        // Get current user
+        const userStr = sessionStorage.getItem('currentUser');
+        if (!userStr) {
+            alert('Please log in to proceed with checkout');
+            return;
+        }
 
-                // Debug logging
-                console.log('🔍 Debug - Customer phone number:', user.phone);
-                console.log('🔍 Debug - n8n URL:', N8N_WEBHOOK_URL);
+        const user = JSON.parse(userStr);
 
-                // Check if cart has items
-                if (cartItems.length === 0) {
-                    alert('Your cart is empty');
-                    return;
-                }
+        // Check if cart has items
+        if (cartItems.length === 0) {
+            alert('Your cart is empty');
+            return;
+        }
 
-                // Check which items are selected for checkout
-                const selectedItems = cartItems.filter(item => {
-                    const checkbox = document.getElementById(`select-item-${item.id}`);
-                    return checkbox && checkbox.checked;
-                });
+        // Check which items are selected for checkout
+        const selectedItems = cartItems.filter(item => {
+            const checkbox = document.getElementById(`select-item-${item.id}`);
+            return checkbox && checkbox.checked;
+        });
 
-                if (selectedItems.length === 0) {
-                    alert('Please select at least one item to checkout');
-                    return;
-                }
+        if (selectedItems.length === 0) {
+            alert('Please select at least one item to checkout');
+            return;
+        }
 
-                // Calculate selected items total
-                const selectedTotal = selectedItems.reduce((sum, item) => {
-                    return sum + (item.quantity * item.product.price);
-                }, 0);
+        // Calculate selected items total
+        const selectedTotal = selectedItems.reduce((sum, item) => {
+            return sum + (item.quantity * item.product.price);
+        }, 0);
 
-                // Show combined checkout dialog
-                const checkoutData = await showCombinedCheckoutDialog(user, selectedTotal);
-                if (!checkoutData) return; // User cancelled
+        // Show checkout dialog
+        const checkoutData = await showCombinedCheckoutDialog(user, selectedTotal);
+        if (!checkoutData) return; // User cancelled
 
-                // Regular confirmation for order placement
-                if (!confirm("Are you sure you want to place this order?")) {
-                    return;
-                }
+        // Confirm order placement
+        if (!confirm("Are you sure you want to place this order?")) {
+            return;
+        }
 
-                // ===== FETCH CUSTOMER DATA FIRST =====
+        // Get fresh customer data from database
+        const { data: freshCustomerData, error: customerFetchError } = await supabase
+            .from('customers')
+            .select('phone, name, email, customer_id')
+            .eq('id', user.id)
+            .single();
 
-                // Debug customer phone number
-                console.log('🔍 Debug - User object:', user);
-                console.log('🔍 Debug - User phone from session:', user.phone);
+        if (customerFetchError) {
+            console.error('Error fetching customer data:', customerFetchError);
+        }
 
-                // Get fresh customer data from database to ensure we have the phone number
-                const { data: freshCustomerData, error: customerFetchError } = await supabase
-                    .from('customers')
-                    .select('phone, name, email, customer_id')
-                    .eq('id', user.id)
-                    .single();
+        const customerDataForN8n = freshCustomerData || user;
 
-                if (customerFetchError) {
-                    console.error('Error fetching fresh customer data:', customerFetchError);
-                } else {
-                    console.log('🔍 Fresh customer data from DB:', freshCustomerData);
-                }
+        // Generate order ID
+        const currentYear = new Date().getFullYear();
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        const orderIdValue = `ORD-${currentYear}-${randomNum}`;
 
-                // Use fresh data if available, fallback to session data
-                const customerDataForN8n = freshCustomerData || user;
+        // Create a new order with awaiting_confirmation status (hidden from admin)
+        const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .insert({
+                customer_id: user.id,
+                amount: selectedTotal,
+                status: 'awaiting_confirmation', // New simplified status
+                payment_status: 'unpaid',
+                address: checkoutData.deliveryAddress,
+                order_date: new Date().toISOString(),
+                order_id: orderIdValue,
+                driver: checkoutData.driver,
+                is_urgent: checkoutData.isUrgent,
+                customer_phone: customerDataForN8n.phone || user.phone || 'N/A'
+            })
+            .select();
 
-                // Cancel any existing unconfirmed orders for this customer
-                console.log('🔄 Cancelling any existing unconfirmed orders for customer...');
-                const { error: cancelError } = await supabase
-                    .from('orders')
-                    .update({
-                        status: 'cancelled'
-                    })
-                    .eq('customer_id', user.id)
-                    .in('status', ['awaiting_confirmation', 'pending_confirmation', 'payment_pending']);
+        if (orderError) {
+            console.error('Error creating order:', orderError);
+            alert('Error processing order: ' + orderError.message);
+            return;
+        }
 
-                if (cancelError) {
-                    console.warn('⚠️ Could not cancel existing orders:', cancelError);
-                    // Don't block checkout if this fails
-                }
+        const orderId = order[0].id;
 
-                // Generate order ID (format: ORD-YYYY-XXXX)
-                const currentYear = new Date().getFullYear();
-                const randomNum = Math.floor(1000 + Math.random() * 9000);
-                const orderIdValue = `ORD-${currentYear}-${randomNum}`;
+        // Add order items
+        const orderItems = [];
+        for (const item of selectedItems) {
+            const { data: productDetails, error: productError } = await supabase
+                .from('products')
+                .select('variations, category')
+                .eq('id', item.productId)
+                .single();
 
-                // Create a new order (hidden from admin until confirmed)
-                const { data: order, error: orderError } = await supabase
-                    .from('orders')
-                    .insert({
-                        customer_id: user.id,
-                        amount: selectedTotal,
-                        status: 'awaiting_confirmation', // Hidden status - not visible to admin until confirmed
-                        payment_status: 'unpaid', // Always unpaid initially
-                        address: checkoutData.deliveryAddress,
-                        order_date: new Date().toISOString(),
-                        order_id: orderIdValue,
-                        driver: checkoutData.driver,
-                        is_urgent: checkoutData.isUrgent,
-                        customer_phone: customerDataForN8n.phone || user.phone || 'N/A' // Store phone for WhatsApp responses
-                    })
-                    .select();
+            if (productError) {
+                console.error('Error fetching product details:', productError);
+                continue;
+            }
 
-                if (orderError) {
-                    console.error('Error creating order:', orderError);
-                    alert('Error processing order: ' + orderError.message);
-                    return;
-                }
+            const orderItem = {
+                order_id: orderId,
+                product_id: item.productId,
+                quantity: item.quantity,
+                unit_price: item.product.price,
+                variations: productDetails.variations || null,
+                category: productDetails.category || null
+            };
 
-                // Get the new order ID
-                const orderId = order[0].id;
+            orderItems.push(orderItem);
+        }
 
-                // Add order items with variations and category
-                const orderItems = [];
+        // Insert all order items
+        const { error: itemsError } = await supabase
+            .from('order_products')
+            .insert(orderItems);
 
-                // Process each selected cart item to include variations and category
-                for (const item of selectedItems) {
-                    // Get full product details including variations and category
-                    const { data: productDetails, error: productError } = await supabase
-                        .from('products')
-                        .select('variations, category')
-                        .eq('id', item.productId)
-                        .single();
+        if (itemsError) {
+            console.error('Error adding order items:', itemsError);
+            alert('Error processing order items: ' + itemsError.message);
+            return;
+        }
 
-                    if (productError) {
-                        console.error('Error fetching product details:', productError);
-                        continue;
-                    }
+        // Send WhatsApp notification via n8n
+        const orderDataForN8n = {
+            orderId: orderIdValue,
+            customerName: customerDataForN8n.name || user.name || 'Customer',
+            customerPhone: customerDataForN8n.phone || user.phone || 'N/A',
+            customerEmail: customerDataForN8n.email || user.email || 'Not provided',
+            items: selectedItems.map(item => ({
+                name: item.product.name,
+                quantity: item.quantity,
+                price: item.product.price,
+                productId: item.product.product_id || item.product.id,
+                variations: item.product.variations || null,
+                category: item.product.category || null,
+                subtotal: (item.quantity * item.product.price).toFixed(2)
+            })),
+            total: selectedTotal,
+            deliveryAddress: checkoutData.deliveryAddress,
+            deliveryMethod: checkoutData.deliveryMethod,
+            driver: checkoutData.driver,
+            isUrgent: checkoutData.isUrgent,
+            isPaid: false,
+            orderDate: new Date().toISOString(),
+            paymentStatus: 'pending',
+            orderStatus: 'awaiting_confirmation'
+        };
 
-                    // Create order item with all needed fields
-                    const orderItem = {
-                        order_id: orderId,
-                        product_id: item.productId,
-                        quantity: item.quantity,
-                        unit_price: item.product.price,
-                        variations: productDetails.variations || null,
-                        category: productDetails.category || null
-                    };
+        console.log('🚀 Sending purchase notification to n8n...');
+        const n8nSuccess = await sendOrderToN8n(orderDataForN8n, customerDataForN8n);
 
-                    orderItems.push(orderItem);
-                }
+        if (!n8nSuccess) {
+            console.warn('⚠️ Failed to send WhatsApp notification, but order was placed successfully');
+        }
 
-                // Insert all order items
-                const { error: itemsError } = await supabase
-                    .from('order_products')
-                    .insert(orderItems);
+        // Remove checked out items from cart
+        for (const item of selectedItems) {
+            const { error: removeError } = await supabase
+                .from('cart')
+                .delete()
+                .eq('id', item.id);
 
-                if (itemsError) {
-                    console.error('Error adding order items:', itemsError);
-                    alert('Error processing order items: ' + itemsError.message);
-                    return;
-                }
-
-                // ===== n8n INTEGRATION - SEND WHATSAPP NOTIFICATION =====
-
-                // Prepare detailed data for n8n with all order information
-                const orderDataForN8n = {
-                    orderId: orderIdValue,
-                    customerName: customerDataForN8n.name || user.name || 'Customer',
-                    customerPhone: customerDataForN8n.phone || user.phone || 'N/A',
-                    customerEmail: customerDataForN8n.email || user.email || 'Not provided',
-                    items: selectedItems.map(item => ({
-                        name: item.product.name,
-                        quantity: item.quantity,
-                        price: item.product.price,
-                        productId: item.product.product_id || item.product.id,
-                        variations: item.product.variations || null,
-                        category: item.product.category || null,
-                        subtotal: (item.quantity * item.product.price).toFixed(2)
-                    })),
-                    total: selectedTotal,
-                    deliveryAddress: checkoutData.deliveryAddress,
-                    deliveryMethod: checkoutData.deliveryMethod,
-                    driver: checkoutData.driver,
-                    isUrgent: checkoutData.isUrgent,
-                    isPaid: false, // Always false initially - payment after WhatsApp confirmation
-                    orderDate: new Date().toISOString(),
-                    paymentStatus: 'pending',
-                    orderStatus: 'awaiting_confirmation'
-                };
-
-                // Send notification to n8n (non-blocking)
-                console.log('🚀 Sending purchase notification to n8n...');
-                console.log('🔍 Customer data being sent:', customerDataForN8n);
-                const n8nSuccess = await sendOrderToN8n(orderDataForN8n, customerDataForN8n);
-
-                if (!n8nSuccess) {
-                    console.warn('⚠️ Failed to send WhatsApp notification, but order was placed successfully');
-                    // Don't fail the entire checkout process if WhatsApp notification fails
-                }
-
-                // ===== END n8n INTEGRATION =====
-
-                // Remove checked out items from cart
-                for (const item of selectedItems) {
-                    const { error: removeError } = await supabase
-                        .from('cart')
-                        .delete()
-                        .eq('id', item.id);
-
-                    if (removeError) {
-                        console.error('Error removing cart item:', removeError);
-                    }
-                }
-
-                // Update local cart items
-                cartItems = cartItems.filter(item => {
-                    const checkbox = document.getElementById(`select-item-${item.id}`);
-                    return !(checkbox && checkbox.checked);
-                });
-
-                // Update cart display
-                updateCartDisplay();
-
-                // Show success message with WhatsApp notification status
-                let successMessage = '🎉 Order submitted successfully!\n\n';
-
-                if (n8nSuccess) {
-                    successMessage += '📱 You will receive a WhatsApp message shortly with your order details.\n\n';
-                    successMessage += '⚡ IMPORTANT NEXT STEPS:\n';
-                    successMessage += '1. Check your WhatsApp for order details\n';
-                    successMessage += '2. Reply "confirm" to proceed with your order\n';
-                    successMessage += '3. Your order will only be sent to admin AFTER confirmation\n';
-                    successMessage += '4. Complete payment after confirmation\n\n';
-                    successMessage += '⚠️ Your order will NOT be processed until you confirm via WhatsApp!\n\n';
-                } else {
-                    successMessage += '⚠️ WhatsApp notification could not be sent. Please contact us directly.\n\n';
-                }
-
-                // Add order details
-                successMessage += `📋 Order ID: ${orderIdValue}\n`;
-                successMessage += `🚚 Delivery: ${checkoutData.deliveryMethod.replace('_', ' ').toUpperCase()}\n`;
-                successMessage += `👨‍💼 Assigned to: ${checkoutData.driver}\n`;
-
-                if (checkoutData.isUrgent) {
-                    successMessage += '🚨 This order is marked as URGENT\n';
-                }
-
-                successMessage += '\n💳 Payment will be required after WhatsApp confirmation.';
-
-                alert(successMessage);
-
-            } catch (error) {
-                console.error('💥 Error processing checkout:', error);
-                alert('An error occurred during checkout. Please try again.');
+            if (removeError) {
+                console.error('Error removing cart item:', removeError);
             }
         }
+
+        // Update local cart items
+        cartItems = cartItems.filter(item => {
+            const checkbox = document.getElementById(`select-item-${item.id}`);
+            return !(checkbox && checkbox.checked);
+        });
+
+        // Update cart display
+        updateCartDisplay();
+
+        // Show success message
+        let successMessage = '🎉 Order submitted successfully!\n\n';
+
+        if (n8nSuccess) {
+            successMessage += '📱 You will receive a WhatsApp message shortly with your order details.\n\n';
+            successMessage += '⚡ IMPORTANT NEXT STEPS:\n';
+            successMessage += '1. Check your WhatsApp for order details\n';
+            successMessage += '2. Reply "confirm" to proceed with your order\n';
+            successMessage += '3. Your order will only be sent to admin AFTER confirmation\n';
+            successMessage += '4. Complete payment after confirmation\n\n';
+            successMessage += '⚠️ Your order will NOT be processed until you confirm via WhatsApp!\n\n';
+        } else {
+            successMessage += '⚠️ WhatsApp notification could not be sent. Please contact us directly.\n\n';
+        }
+
+        successMessage += `📋 Order ID: ${orderIdValue}\n`;
+        successMessage += `🚚 Delivery: ${checkoutData.deliveryMethod.replace('_', ' ').toUpperCase()}\n`;
+        successMessage += `👨‍💼 Assigned to: ${checkoutData.driver}\n`;
+
+        if (checkoutData.isUrgent) {
+            successMessage += '🚨 This order is marked as URGENT\n';
+        }
+
+        successMessage += '\n💳 Payment will be required after WhatsApp confirmation.';
+
+        alert(successMessage);
+
+    } catch (error) {
+        console.error('💥 Error processing checkout:', error);
+        alert('An error occurred during checkout. Please try again.');
+    }
+}
 
         // Combined checkout dialog function - replaces all separate prompts
         function showCombinedCheckoutDialog(user, total) {
