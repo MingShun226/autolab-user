@@ -1479,7 +1479,7 @@ async function proceedToCheckout() {
             .from('orders')
             .insert({
                 customer_id: user.id,
-                amount: selectedTotal,
+                amount: checkoutData.finalAmount,
                 status: 'awaiting_confirmation', // New simplified status
                 payment_status: 'unpaid',
                 address: checkoutData.deliveryAddress,
@@ -1551,7 +1551,7 @@ async function proceedToCheckout() {
                 category: item.product.category || null,
                 subtotal: (item.quantity * item.product.price).toFixed(2)
             })),
-            total: selectedTotal,
+            total: checkoutData.finalAmount,
             deliveryAddress: checkoutData.deliveryAddress,
             deliveryMethod: checkoutData.deliveryMethod,
             driver: checkoutData.driver,
@@ -1614,6 +1614,11 @@ async function proceedToCheckout() {
         }
 
         successMessage += '\n💳 Payment will be required after WhatsApp confirmation.';
+
+        successMessage += `\n\nTotal Amount: RM ${checkoutData.finalAmount.toFixed(2)}`;
+        if (checkoutData.finalAmount > selectedTotal) {
+            successMessage += ` (includes RM 10.00 delivery fee)`;
+        }
 
         alert(successMessage);
 
@@ -1710,11 +1715,19 @@ async function proceedToCheckout() {
                 // Table footer with total
                 const tableFooter = document.createElement('tfoot');
                 tableFooter.innerHTML = `
-            <tr>
-                <td colspan="3" style="text-align: right; padding: 15px 15px 0 0; font-weight: bold;">Total:</td>
-                <td style="text-align: right; padding: 15px 0 0 0; font-weight: bold; color: #e21b1b;">RM ${total.toFixed(2)}</td>
-            </tr>
-        `;
+                    <tr>
+                        <td colspan="3" style="text-align: right; padding: 12px 15px 5px 0;">Subtotal:</td>
+                        <td style="text-align: right; padding: 12px 0 5px 0;">RM ${total.toFixed(2)}</td>
+                    </tr>
+                    <tr id="delivery-fee-row" style="display: none;">
+                        <td colspan="3" style="text-align: right; padding: 5px 15px 5px 0;">Delivery Fee:</td>
+                        <td id="delivery-fee-amount" style="text-align: right; padding: 5px 0 5px 0;">RM 10.00</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" style="text-align: right; padding: 5px 15px 0 0; font-weight: bold; border-top: 1px solid #ddd; padding-top: 12px;">Total:</td>
+                        <td id="final-total-amount" style="text-align: right; padding: 5px 0 0 0; font-weight: bold; color: #e21b1b; border-top: 1px solid #ddd; padding-top: 12px;">RM ${total.toFixed(2)}</td>
+                    </tr>
+                `;
                 summaryTable.appendChild(tableFooter);
 
                 summarySection.appendChild(summaryTable);
@@ -1756,9 +1769,10 @@ async function proceedToCheckout() {
 
                 // Add options
                 const deliveryOptions = [
-                    { value: 'driver', label: 'Driver (KL/Selangor)' },
-                    { value: 'lalamove', label: 'Lalamove Delivery' },
-                    { value: 'selfpickup', label: 'Self Pickup (KL)' }
+                    { value: 'local_driver', label: 'Local Driver (Selangor/KL Area)' },
+                    { value: 'overstate_driver', label: 'Overstate Driver (Other States)' },
+                    { value: 'lalamove_urgent', label: 'Lalamove (Urgent Delivery)' },
+                    { value: 'self_pickup', label: 'Self Pickup (Autolab Address)' }
                 ];
 
                 deliveryOptions.forEach(option => {
@@ -1779,17 +1793,56 @@ async function proceedToCheckout() {
                 deliveryMethodSelect.appendChild(deliverySelectBox);
                 deliveryMethodSelect.appendChild(selectArrow);
 
+                const deliveryFeeNotice = document.createElement('div');
+                deliveryFeeNotice.id = 'delivery-fee-notice';
+                deliveryFeeNotice.style.fontSize = '12px';
+                deliveryFeeNotice.style.color = '#e21b1b';
+                deliveryFeeNotice.style.marginTop = '5px';
+                deliveryFeeNotice.style.display = 'none';
+                deliveryFeeNotice.style.fontWeight = '500';
+                deliveryFeeNotice.textContent = 'A delivery fee of RM 10.00 will be applied.';
+
                 const deliveryMethodSection = document.createElement('div');
                 deliveryMethodSection.appendChild(deliveryMethodLabel);
                 deliveryMethodSection.appendChild(deliveryMethodSelect);
+                deliveryMethodSection.appendChild(deliveryFeeNotice);
 
                 // Add event listener to handle address section visibility
                 deliverySelectBox.addEventListener('change', function () {
                     const addressSection = document.getElementById('address-section');
-                    if (this.value === 'selfpickup') {
+                    if (this.value === 'self_pickup') {
                         addressSection.style.display = 'none';
                     } else {
                         addressSection.style.display = 'block';
+                    }
+
+                    const deliveryFeeRow = document.getElementById('delivery-fee-row');
+                    const finalTotalAmountElem = document.getElementById('final-total-amount');
+                    const deliveryFeeNoticeElem = document.getElementById('delivery-fee-notice');
+
+                    if (this.value === 'lalamove_urgent') {
+                        deliveryFeeRow.style.display = 'table-row';
+                        deliveryFeeNoticeElem.style.display = 'block';
+                        finalTotalAmountElem.textContent = `RM ${(total + 10).toFixed(2)}`;
+                    } else {
+                        deliveryFeeRow.style.display = 'none';
+                        deliveryFeeNoticeElem.style.display = 'none';
+                        finalTotalAmountElem.textContent = `RM ${total.toFixed(2)}`;
+                    }
+
+                    // Automatically handle urgent status
+                    const urgentCheckbox = document.getElementById('urgent-checkbox');
+                    const urgentContainer = urgentCheckbox.parentElement;
+                    if (this.value === 'lalamove_urgent') {
+                        urgentCheckbox.checked = true;
+                        urgentCheckbox.disabled = true;
+                        urgentContainer.style.borderColor = '#e21b1b';
+                        urgentContainer.style.backgroundColor = '#fff3f3';
+                    } else {
+                        urgentCheckbox.checked = false;
+                        urgentCheckbox.disabled = false;
+                        urgentContainer.style.borderColor = '#ddd';
+                        urgentContainer.style.backgroundColor = 'white';
                     }
                 });
 
@@ -2033,13 +2086,14 @@ async function proceedToCheckout() {
                 placeOrderButton.addEventListener('click', async () => {
                     // Get delivery method
                     const deliveryMethod = deliverySelectBox.value;
+                    const deliveryMethodLabel = deliverySelectBox.options[deliverySelectBox.selectedIndex].text;
 
                     // Handle address based on delivery method
                     let deliveryAddress = '';
                     let driver = '';
 
-                    if (deliveryMethod === 'selfpickup') {
-                        deliveryAddress = 'Self Pickup (KL)';
+                    if (deliveryMethod === 'self_pickup') {
+                        deliveryAddress = 'Self Pickup (Autolab Address)';
                         driver = 'Self Pickup';
                     } else {
                         // Get selected address
@@ -2062,12 +2116,7 @@ async function proceedToCheckout() {
                         }
 
                         // Set driver based on delivery method
-                        if (deliveryMethod === 'driver') {
-                            // Randomly assign Driver 1 or Driver 2
-                            driver = Math.random() < 0.5 ? 'Driver 1' : 'Driver 2';
-                        } else if (deliveryMethod === 'lalamove') {
-                            driver = 'Lalamove';
-                        }
+                        driver = deliveryMethodLabel;
 
                         // Update user's addresses in database if changed
                         const userUpdates = {};
@@ -2098,17 +2147,23 @@ async function proceedToCheckout() {
                         }
                     }
 
-                    // Get urgent status
+                    // Get urgent status based on dropdown and checkbox
                     const isUrgent = document.getElementById('urgent-checkbox').checked;
+
+                    let finalTotal = total;
+                    if (deliveryMethod === 'lalamove_urgent') {
+                        finalTotal += 10;
+                    }
 
                     // Return checkout data (payment always false initially)
                     document.body.removeChild(overlay);
                     resolve({
-                        deliveryMethod,
+                        deliveryMethod: deliveryMethodLabel,
                         deliveryAddress,
                         isPaid: false, // Always false - payment after WhatsApp confirmation
                         isUrgent,
-                        driver
+                        driver: driver,
+                        finalAmount: finalTotal
                     });
                 });
 
@@ -2131,7 +2186,7 @@ async function proceedToCheckout() {
                 document.body.appendChild(overlay);
 
                 // Initialize state - if self-pickup is selected initially, hide address section
-                if (deliverySelectBox.value === 'selfpickup') {
+                if (deliverySelectBox.value === 'self_pickup') {
                     addressSection.style.display = 'none';
                 }
             });
