@@ -815,11 +815,11 @@
                 paymentBtn.disabled = true;
                 paymentBtn.innerHTML = '⏳ Processing...';
 
-                // Update order status to payment_done
+                // Update order status to payment_submitted
                 const { error: updateError } = await supabase
                     .from('orders')
                     .update({
-                        status: 'payment_done',
+                        status: 'payment_submitted',
                         payment_method: selectedPaymentMethod,
                         payment_done_at: new Date().toISOString()
                     })
@@ -867,7 +867,7 @@
                                 paymentMethod: selectedPaymentMethod,
                                 customerPhone: orderData.customer_phone,
                                 submittedAt: new Date().toISOString(),
-                                status: 'payment_done'
+                                status: 'payment_submitted'
                             })}`
                         }
                     }]
