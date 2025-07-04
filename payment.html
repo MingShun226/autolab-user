@@ -821,7 +821,7 @@
                     .update({
                         status: 'payment_submitted',
                         payment_method: selectedPaymentMethod,
-                        payment_done_at: new Date().toISOString()
+                        payment_verified_at: new Date().toISOString()
                     })
                     .eq('id', orderData.id);
 
