@@ -1061,7 +1061,7 @@ async function testN8nConnection() {
 
                 const { data: productData, error: productError } = await supabase
                     .from('products')
-                    .select('id, product_id, name, price, quantity, category, variations, image_url')
+                    .select('id, product_id, name, price, quantity, category, image_url') // REMOVED variations
                     .in('id', productIds);
 
                 if (productError) {
