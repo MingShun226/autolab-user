@@ -5,37 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Autolabs - My Account</title>
     <style>
+        /* Import Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* Soft Red Color Palette Variables */
+        :root {
+            /* Primary Colors - Soft Red */
+            --primary-50: #fef2f2;
+            --primary-100: #fee2e2;
+            --primary-200: #fecaca;
+            --primary-300: #fca5a5;
+            --primary-400: #f87171;
+            --primary-500: #ef4444;
+            --primary-600: #dc2626;
+            --primary-700: #b91c1c;
+            --primary-800: #991b1b;
+            --primary-900: #7f1d1d;
+            
+            /* Secondary Colors - Warm Red */
+            --secondary-50: #fff7ed;
+            --secondary-100: #ffedd5;
+            --secondary-200: #fed7aa;
+            --secondary-300: #fdba74;
+            --secondary-400: #fb923c;
+            --secondary-500: #f97316;
+            --secondary-600: #ea580c;
+            --secondary-700: #c2410c;
+            --secondary-800: #9a3412;
+            --secondary-900: #7c2d12;
+            
+            /* Neutral Colors - Warm Grays */
+            --neutral-50: #fafaf9;
+            --neutral-100: #f5f5f4;
+            --neutral-200: #e7e5e4;
+            --neutral-300: #d6d3d1;
+            --neutral-400: #a8a29e;
+            --neutral-500: #78716c;
+            --neutral-600: #57534e;
+            --neutral-700: #44403c;
+            --neutral-800: #292524;
+            --neutral-900: #1c1917;
+            
+            /* Status Colors - Soft tones */
+            --success-light: #d1fae5;
+            --success: #10b981;
+            --success-dark: #047857;
+            
+            --warning-light: #fef3c7;
+            --warning: #f59e0b;
+            --warning-dark: #d97706;
+            
+            --error-light: var(--primary-100);
+            --error: var(--primary-500);
+            --error-dark: var(--primary-700);
+        }
+        
         /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         body {
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, var(--neutral-50) 0%, var(--primary-50) 50%, var(--secondary-50) 100%);
             display: flex;
+            min-height: 100vh;
+            animation: backgroundShift 30s ease-in-out infinite alternate;
+            color: var(--neutral-800);
+        }
+        
+        @keyframes backgroundShift {
+            0% { background: linear-gradient(135deg, var(--neutral-50) 0%, var(--primary-50) 50%, var(--secondary-50) 100%); }
+            50% { background: linear-gradient(135deg, var(--primary-50) 0%, var(--secondary-50) 50%, var(--neutral-50) 100%); }
+            100% { background: linear-gradient(135deg, var(--secondary-50) 0%, var(--neutral-50) 50%, var(--primary-50) 100%); }
         }
         
         /* Sidebar Styles */
         .sidebar {
-            width: 205px;
-            height: 100vh;
-            background-color: #333;
-            color: white;
-            position: fixed;
-            left: 0;
-            top: 0;
+            width: 280px;
+            padding: 30px 20px;
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 25px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
         }
         
         .logo {
-            padding: 20px;
             font-size: 24px;
             font-weight: bold;
-            border-bottom: 1px solid #444;
             display: flex;
             align-items: center;
+            margin-bottom: 40px;
+            text-decoration: none;
+            color: var(--primary-600);
         }
         
         .logo svg {
@@ -43,12 +112,15 @@
         }
         
         .nav-item {
-            padding: 15px 20px;
             display: flex;
             align-items: center;
-            color: white;
+            padding: 12px 16px;
+            color: var(--neutral-600);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: transparent;
             text-decoration: none;
-            transition: background 0.3s;
+            margin-bottom: 8px;
         }
         
         .nav-item svg {
@@ -56,18 +128,28 @@
         }
         
         .nav-item:hover {
-            background-color: #444;
+            background: linear-gradient(135deg, var(--primary-100), var(--secondary-100));
+            color: var(--primary-700);
+            transform: translateX(4px);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);
         }
         
         .nav-item.active {
-            background-color: #e21b1b;
+            background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
+            color: white;
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
         }
         
         /* Main Content Area */
         .main-content {
-            margin-left: 205px;
-            width: calc(100% - 205px);
-            padding: 20px;
+            flex: 1;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 24px;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 25px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.9);
         }
         
         .header {
@@ -78,8 +160,13 @@
         }
         
         .header h1 {
-            font-size: 28px;
-            color: #333;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--neutral-800);
+            background: linear-gradient(135deg, var(--primary-600), var(--secondary-600));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .user-actions {
@@ -101,7 +188,7 @@
             position: absolute;
             top: -5px;
             right: -5px;
-            background-color: #e21b1b;
+            background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
             color: white;
             border-radius: 50%;
             width: 20px;
@@ -121,7 +208,7 @@
             position: absolute;
             top: -5px;
             right: -5px;
-            background-color: #e21b1b;
+            background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
             color: white;
             border-radius: 50%;
             width: 20px;
@@ -133,15 +220,16 @@
         }
         
         .user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background-color: #e21b1b;
+            background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 18px;
         }
         
         /* Account Dashboard Layout */
@@ -153,10 +241,11 @@
         
         /* Account Sidebar */
         .account-sidebar {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--neutral-200);
+            padding: 24px;
         }
         
         .account-profile {
@@ -170,7 +259,7 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            background-color: #e21b1b;
+            background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
             color: white;
             font-size: 40px;
             font-weight: bold;
@@ -235,8 +324,8 @@
         }
         
         .account-menu-link.active {
-            background-color: #f5f5f5;
-            color: #e21b1b;
+            background: linear-gradient(135deg, var(--primary-100), var(--secondary-100));
+            color: var(--primary-600);
             font-weight: 500;
         }
         
@@ -253,9 +342,10 @@
         }
         
         .account-section {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--neutral-200);
             padding: 25px;
             margin-bottom: 20px;
         }
@@ -322,8 +412,10 @@
         }
         
         .form-input:focus {
-            border-color: #4285F4;
+            border-color: var(--primary-400);
             outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
         }
         
         .form-actions {
@@ -344,16 +436,23 @@
         }
         
         .btn-save {
-            padding: 10px 20px;
-            background-color: #e21b1b;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 12px;
             font-size: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25);
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
         }
         
         /* Address Cards */
@@ -371,8 +470,8 @@
         }
         
         .address-card.primary {
-            border-color: #4285F4;
-            background-color: #f8fbff;
+            border-color: var(--primary-400);
+            background: linear-gradient(135deg, var(--primary-50), var(--secondary-50));
         }
         
         .address-type {
@@ -386,7 +485,7 @@
         .address-primary-badge {
             display: inline-block;
             padding: 3px 8px;
-            background-color: #4285F4;
+            background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
             color: white;
             border-radius: 10px;
             font-size: 11px;
@@ -440,8 +539,8 @@
         }
         
         .payment-card.default {
-            border-color: #4285F4;
-            background-color: #f8fbff;
+            border-color: var(--primary-400);
+            background: linear-gradient(135deg, var(--primary-50), var(--secondary-50));
         }
         
         .payment-header {
@@ -475,7 +574,7 @@
         .payment-default-badge {
             display: inline-block;
             padding: 3px 8px;
-            background-color: #4285F4;
+            background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
             color: white;
             border-radius: 10px;
             font-size: 11px;
@@ -598,7 +697,7 @@
         }
         
         input:checked + .toggle-slider {
-            background-color: #4285F4;
+            background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
         }
         
         input:checked + .toggle-slider:before {
@@ -611,7 +710,7 @@
             const cartIcon = document.querySelector('.cart-icon');
             if (cartIcon) {
                 cartIcon.addEventListener('click', function() {
-                    window.location.href = 'Cart.html';
+                    window.location.href = 'cart.html';
                 });
                 cartIcon.style.cursor = 'pointer';
             }
@@ -642,53 +741,34 @@
             </svg>
             Autolabs
         </div>
-        <a href="Homepage.html" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-            Dashboard
-        </a>
-        <a href="ProductCatalog.html" class="nav-item">
+        <a href="catalog.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
             </svg>
-            Product Catalog
+            🏠 Catalog
         </a>
-        <a href="Cart.html" class="nav-item">
+        <a href="cart.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="9" cy="21" r="1"></circle>
                 <circle cx="20" cy="21" r="1"></circle>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
             </svg>
-            Cart
+            🛒 Cart
         </a>
-        <a href="OrderHistory.html" class="nav-item">
+        <a href="myorder.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            Order History
-        </a>
-        <a href="TrackOrder.html" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 17H5a2 2 0 0 0-2 2 2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2zm6 0h4a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2zm0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2z"></path>
-            </svg>
-            Track Orders
+            📦 My Orders
         </a>
         <a href="MyAccount.html" class="nav-item active">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
             </svg>
-            My Account
-        </a>
-        <a href="Support.html" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-            </svg>
-            Contact Support
+            👤 My Account
         </a>
     </div>
 
@@ -703,7 +783,7 @@
                         <circle cx="20" cy="21" r="1"></circle>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                     </svg>
-                    <span class="cart-count">3</span>
+                    <span class="cart-count">0</span>
                 </div>
                 <div class="notifications">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -811,7 +891,7 @@
                 <div class="account-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e21b1b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
@@ -864,7 +944,7 @@
                 <div class="account-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e21b1b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
                             </svg>
@@ -921,7 +1001,7 @@
                 <div class="account-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e21b1b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                                 <line x1="1" y1="10" x2="23" y2="10"></line>
                             </svg>
@@ -989,7 +1069,7 @@
                 <div class="account-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e21b1b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                             </svg>
                             Security Settings
@@ -1033,7 +1113,7 @@
                 <div class="account-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e21b1b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                             </svg>
@@ -1101,7 +1181,7 @@
                 <div class="account-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e21b1b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                                 <line x1="3" y1="6" x2="21" y2="6"></line>
                                 <path d="M16 10a4 4 0 0 1-8 0"></path>

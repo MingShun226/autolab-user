@@ -7,18 +7,81 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <title>Shopping Cart - Autolabs</title>
     <style>
+        /* Import Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* Soft Red Color Palette Variables */
+        :root {
+            /* Primary Colors - Soft Red */
+            --primary-50: #fef2f2;
+            --primary-100: #fee2e2;
+            --primary-200: #fecaca;
+            --primary-300: #fca5a5;
+            --primary-400: #f87171;
+            --primary-500: #ef4444;
+            --primary-600: #dc2626;
+            --primary-700: #b91c1c;
+            --primary-800: #991b1b;
+            --primary-900: #7f1d1d;
+            
+            /* Secondary Colors - Warm Red */
+            --secondary-50: #fff7ed;
+            --secondary-100: #ffedd5;
+            --secondary-200: #fed7aa;
+            --secondary-300: #fdba74;
+            --secondary-400: #fb923c;
+            --secondary-500: #f97316;
+            --secondary-600: #ea580c;
+            --secondary-700: #c2410c;
+            --secondary-800: #9a3412;
+            --secondary-900: #7c2d12;
+            
+            /* Neutral Colors - Warm Grays */
+            --neutral-50: #fafaf9;
+            --neutral-100: #f5f5f4;
+            --neutral-200: #e7e5e4;
+            --neutral-300: #d6d3d1;
+            --neutral-400: #a8a29e;
+            --neutral-500: #78716c;
+            --neutral-600: #57534e;
+            --neutral-700: #44403c;
+            --neutral-800: #292524;
+            --neutral-900: #1c1917;
+            
+            /* Status Colors - Soft tones */
+            --success-light: #d1fae5;
+            --success: #10b981;
+            --success-dark: #047857;
+            
+            --warning-light: #fef3c7;
+            --warning: #f59e0b;
+            --warning-dark: #d97706;
+            
+            --error-light: var(--primary-100);
+            --error: var(--primary-500);
+            --error-dark: var(--primary-700);
+        }
+        
         /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background-color: #f8f9fa;
+            background: linear-gradient(135deg, var(--neutral-50) 0%, var(--primary-50) 50%, var(--secondary-50) 100%);
             display: flex;
             min-height: 100vh;
+            animation: backgroundShift 30s ease-in-out infinite alternate;
+            color: var(--neutral-800);
+        }
+        
+        @keyframes backgroundShift {
+            0% { background: linear-gradient(135deg, var(--neutral-50) 0%, var(--primary-50) 50%, var(--secondary-50) 100%); }
+            50% { background: linear-gradient(135deg, var(--primary-50) 0%, var(--secondary-50) 50%, var(--neutral-50) 100%); }
+            100% { background: linear-gradient(135deg, var(--secondary-50) 0%, var(--neutral-50) 50%, var(--primary-50) 100%); }
         }
 
         /* Sidebar Styles */
@@ -48,10 +111,8 @@
         }
 
         .logo span {
-            color: #2c3e50;
-            /* Keep the text color as it is */
+            color: var(--neutral-700);
             position: relative;
-            /* For the custom underline */
         }
 
         .logo span::after {
@@ -61,10 +122,9 @@
             height: 2px;
             bottom: -4px;
             left: 0;
-            background-color: #e21b1b;
-            /* Red underline */
+            background: linear-gradient(90deg, var(--primary-500), var(--secondary-400));
             transform: scaleX(1);
-            /* Always visible */
+            border-radius: 1px;
         }
 
         .nav-item {
@@ -92,6 +152,12 @@
         .main-content {
             width: 100%;
             padding: 40px;
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 24px;
+            margin: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 25px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.9);
         }
 
         .header {
@@ -100,13 +166,17 @@
             align-items: center;
             margin-bottom: 40px;
             padding-bottom: 5px;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid var(--neutral-200);
         }
 
         .header h1 {
             font-size: 32px;
-            color: #2c3e50;
+            color: var(--neutral-800);
             font-weight: 600;
+            background: linear-gradient(135deg, var(--primary-600), var(--secondary-600));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .user-actions {
@@ -129,7 +199,7 @@
 
         .cart-icon:hover,
         .notifications:hover {
-            background-color: #f1f1f1;
+            background-color: var(--neutral-100);
         }
 
         .cart-count,
@@ -137,7 +207,7 @@
             position: absolute;
             top: -5px;
             right: -5px;
-            background-color: #e21b1b;
+            background: linear-gradient(135deg, var(--primary-400), var(--primary-500));
             color: white;
             border-radius: 50%;
             width: 20px;
@@ -147,13 +217,14 @@
             justify-content: center;
             font-size: 12px;
             font-weight: 600;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
         }
 
         .user-avatar {
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background-color: #e21b1b;
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -161,6 +232,13 @@
             font-weight: bold;
             color: white;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .user-avatar:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
         }
 
         .user-info {
@@ -192,23 +270,23 @@
         .dropdown-item {
             padding: 8px 16px;
             display: block;
-            color: #2c3e50;
+            color: var(--neutral-700);
         }
 
         .dropdown-divider {
             height: 1px;
-            background-color: #eee;
+            background-color: var(--neutral-200);
             margin: 8px 0;
         }
 
         .dropdown-item.logout {
-            color: #e21b1b;
+            color: var(--primary-500);
             cursor: pointer;
         }
 
         .dropdown-item.logout:hover,
         .dropdown-item.order:hover {
-            background-color: #f8f8f8;
+            background-color: var(--neutral-100);
         }
 
         .header-icons {
@@ -246,20 +324,20 @@
         .summary-title {
             font-size: 24px;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--neutral-700);
             margin-bottom: 20px;
         }
 
         .cart-item {
             display: flex;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid var(--neutral-200);
             padding: 20px 0;
         }
 
         .cart-item-image {
             width: 100px;
             height: 100px;
-            background-color: #f8f9fa;
+            background-color: var(--neutral-100);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -282,20 +360,20 @@
         .cart-item-name {
             font-size: 16px;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--neutral-700);
             margin-bottom: 5px;
         }
 
         .cart-item-sku {
             font-size: 14px;
-            color: #777;
+            color: var(--neutral-500);
             margin-bottom: 10px;
         }
 
         .cart-item-price {
             font-size: 16px;
             font-weight: 600;
-            color: #e21b1b;
+            color: var(--primary-500);
         }
 
         .cart-item-actions {
@@ -307,7 +385,7 @@
         .quantity-control {
             display: flex;
             align-items: center;
-            border: 1px solid #e9ecef;
+            border: 1px solid var(--neutral-200);
             border-radius: 4px;
             overflow: hidden;
         }
@@ -318,7 +396,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #f8f9fa;
+            background-color: var(--neutral-100);
             border: none;
             cursor: pointer;
         }
@@ -333,13 +411,13 @@
         }
 
         .remove-item {
-            color: #777;
+            color: var(--neutral-500);
             cursor: pointer;
             transition: color 0.3s;
         }
 
         .remove-item:hover {
-            color: #e21b1b;
+            color: var(--primary-500);
         }
 
         .summary-row {
@@ -347,7 +425,7 @@
             justify-content: space-between;
             padding: 12px 0;
             font-size: 16px;
-            color: #2c3e50;
+            color: var(--neutral-700);
         }
 
         .summary-row.total {
@@ -360,18 +438,21 @@
 
         .checkout-btn {
             padding: 15px;
-            background-color: #e21b1b;
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
         .checkout-btn:hover {
-            background-color: #c41818;
+            background: linear-gradient(135deg, var(--primary-600), var(--secondary-500));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
         }
 
         .checkout-buttons {
@@ -396,20 +477,23 @@
         .continue-shopping {
             display: inline-block;
             padding: 15px 25px;
-            background-color: #e21b1b;
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
             color: white;
             border-radius: 8px;
             font-weight: 500;
             text-decoration: none;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
             border: none;
             font-size: 16px;
             cursor: pointer;
             margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
         .continue-shopping:hover {
-            background-color: #c41818;
+            background: linear-gradient(135deg, var(--primary-600), var(--secondary-500));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
         }
 
         .empty-cart {
@@ -421,20 +505,20 @@
         }
 
         .empty-cart svg {
-            color: #e21b1b;
+            color: var(--primary-500);
             margin-bottom: 20px;
         }
 
         .empty-cart-title {
             font-size: 24px;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--neutral-700);
             margin-bottom: 10px;
         }
 
         .empty-cart-subtitle {
             font-size: 16px;
-            color: #777;
+            color: var(--neutral-500);
             margin-bottom: 30px;
         }
 
@@ -526,11 +610,11 @@
                 <a href="catalog.html">
                     <div class="logo">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="#e21b1b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            stroke="var(--primary-500)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="8"></circle>
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
-                        <span style="color: #2c3e50; font-weight: bold;">Autolabs</span>
+                        <span style="color: var(--neutral-700); font-weight: bold;">Autolabs</span>
                     </div>
                 </a>
                 <!-- Group user info and icons together -->
@@ -546,7 +630,7 @@
                         </div>
                         <!-- Dropdown menu -->
                         <div class="dropdown-menu" id="userDropdown">
-                            <div class="dropdown-item order"><a href="#"
+                            <div class="dropdown-item order"><a href="MyAccount.html"
                                     style="text-decoration: none; color: inherit;">My Account</a></div>
                             <div class="dropdown-divider"></div>
                             <div class="dropdown-item order"><a href="myorder.html"
@@ -664,7 +748,7 @@
                     <div id="totalAmount">RM 0.00</div>
                 </div>
                 <div id="selectedItemsTotal"
-                    style="display: none; font-size: 14px; color: #e21b1b; margin-top: 5px; text-align: right;">
+                    style="display: none; font-size: 14px; color: var(--primary-500); margin-top: 5px; text-align: right;">
                     Selected: RM 0.00
                 </div>
                 <div class="checkout-buttons">
@@ -1416,6 +1500,8 @@ async function testN8nConnection() {
 
 async function proceedToCheckout() {
     try {
+        console.log('🛒 Starting checkout process...');
+        
         // Get current user
         const userStr = sessionStorage.getItem('currentUser');
         if (!userStr) {
@@ -1424,6 +1510,7 @@ async function proceedToCheckout() {
         }
 
         const user = JSON.parse(userStr);
+        console.log('👤 User:', user.id);
 
         // Check if cart has items
         if (cartItems.length === 0) {
@@ -1437,6 +1524,8 @@ async function proceedToCheckout() {
             return checkbox && checkbox.checked;
         });
 
+        console.log('📦 Selected items:', selectedItems.length);
+
         if (selectedItems.length === 0) {
             alert('Please select at least one item to checkout');
             return;
@@ -1447,6 +1536,8 @@ async function proceedToCheckout() {
             return sum + (item.quantity * item.product.price);
         }, 0);
 
+        console.log('💰 Selected total:', selectedTotal);
+
         // Show checkout dialog
         const checkoutData = await showCombinedCheckoutDialog(user, selectedTotal);
         if (!checkoutData) return; // User cancelled
@@ -1455,6 +1546,8 @@ async function proceedToCheckout() {
         if (!confirm("Are you sure you want to place this order?")) {
             return;
         }
+
+        console.log('✅ User confirmed order');
 
         // Get fresh customer data from database
         const { data: freshCustomerData, error: customerFetchError } = await supabase
@@ -1474,13 +1567,17 @@ async function proceedToCheckout() {
         const randomNum = Math.floor(1000 + Math.random() * 9000);
         const orderIdValue = `ORD-${currentYear}-${randomNum}`;
 
-        // Create a new order with awaiting_confirmation status (hidden from admin)
+        console.log('🏷️ Generated Order ID:', orderIdValue);
+
+        // TRANSACTION START - Create order and order items together
+        console.log('💾 Creating order in database...');
+        
         const { data: order, error: orderError } = await supabase
             .from('orders')
             .insert({
                 customer_id: user.id,
                 amount: checkoutData.finalAmount,
-                status: 'awaiting_confirmation', // New simplified status
+                status: 'awaiting_confirmation',
                 payment_status: 'unpaid',
                 address: checkoutData.deliveryAddress,
                 order_date: new Date().toISOString(),
@@ -1492,48 +1589,72 @@ async function proceedToCheckout() {
             .select();
 
         if (orderError) {
-            console.error('Error creating order:', orderError);
+            console.error('❌ Error creating order:', orderError);
             alert('Error processing order: ' + orderError.message);
             return;
         }
 
-        const orderId = order[0].id;
+        const orderUUID = order[0].id; // This is the UUID we need for foreign key
+        console.log('✅ Order created with UUID:', orderUUID);
 
-        // Add order items
+        // IMPROVED: Add order items with better error handling
+        console.log('📝 Creating order items...');
+        
         const orderItems = [];
+        
         for (const item of selectedItems) {
-            const { data: productDetails, error: productError } = await supabase
-                .from('products')
-                .select('variations, category')
-                .eq('id', item.productId)
-                .single();
-
-            if (productError) {
-                console.error('Error fetching product details:', productError);
-                continue;
-            }
-
+            console.log(`Processing item: ${item.product.name} (ID: ${item.productId})`);
+            
+            // Use the product data we already have from the cart
             const orderItem = {
-                order_id: orderId,
-                product_id: item.productId,
+                order_id: orderUUID,  // Use the UUID from the created order
+                product_id: item.productId,  // This should be the UUID from cart
                 quantity: item.quantity,
                 unit_price: item.product.price,
-                variations: productDetails.variations || null,
-                category: productDetails.category || null
+                variations: item.product.variations || null,
+                category: item.product.category || null
             };
 
             orderItems.push(orderItem);
+            console.log('✅ Prepared order item:', orderItem);
         }
 
-        // Insert all order items
-        const { error: itemsError } = await supabase
+        console.log(`💾 Inserting ${orderItems.length} order items...`);
+
+        // Insert all order items at once
+        const { data: insertedItems, error: itemsError } = await supabase
             .from('order_products')
-            .insert(orderItems);
+            .insert(orderItems)
+            .select(); // Get back the inserted data for verification
 
         if (itemsError) {
-            console.error('Error adding order items:', itemsError);
+            console.error('❌ Error adding order items:', itemsError);
+            console.error('❌ Failed order items data:', orderItems);
+            
+            // Try to clean up the order if items failed
+            await supabase.from('orders').delete().eq('id', orderUUID);
+            
             alert('Error processing order items: ' + itemsError.message);
             return;
+        }
+
+        console.log('✅ Order items inserted successfully:', insertedItems);
+
+        // Verify the order items were actually inserted
+        const { data: verifyItems, error: verifyError } = await supabase
+            .from('order_products')
+            .select('*')
+            .eq('order_id', orderUUID);
+
+        if (verifyError) {
+            console.warn('⚠️ Could not verify order items:', verifyError);
+        } else {
+            console.log('🔍 Verification - Order items in database:', verifyItems);
+            
+            if (verifyItems.length !== selectedItems.length) {
+                console.error('❌ MISMATCH: Expected', selectedItems.length, 'items, found', verifyItems.length);
+                alert('Warning: Not all items were saved correctly. Please contact support.');
+            }
         }
 
         // Send WhatsApp notification via n8n
@@ -1570,6 +1691,8 @@ async function proceedToCheckout() {
         }
 
         // Remove checked out items from cart
+        console.log('🧹 Cleaning up cart...');
+        
         for (const item of selectedItems) {
             const { error: removeError } = await supabase
                 .from('cart')
@@ -1578,6 +1701,8 @@ async function proceedToCheckout() {
 
             if (removeError) {
                 console.error('Error removing cart item:', removeError);
+            } else {
+                console.log('✅ Removed cart item:', item.id);
             }
         }
 
@@ -1622,9 +1747,12 @@ async function proceedToCheckout() {
 
         alert(successMessage);
 
+        console.log('✅ Checkout process completed successfully!');
+
     } catch (error) {
         console.error('💥 Error processing checkout:', error);
-        alert('An error occurred during checkout. Please try again.');
+        console.error('💥 Full error details:', error.message, error.stack);
+        alert('An error occurred during checkout. Please try again. Error: ' + error.message);
     }
 }
 
