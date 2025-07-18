@@ -333,10 +333,31 @@
             justify-content: center;
             background: var(--neutral-100);
             border-radius: 16px;
-            height: 320px;
+            min-height: 320px;
             transition: all 0.3s ease;
             overflow: hidden;
             position: relative;
+        }
+        
+        .product-image::after {
+            content: '🔍 Click to enlarge';
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .product-image:hover::after {
+            opacity: 1;
         }
         
         .product-image:hover {
@@ -345,7 +366,11 @@
         }
         
         .product-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
             transition: transform 0.3s ease;
+            cursor: pointer;
         }
         
         .product-image:hover img {
@@ -776,6 +801,75 @@
         font-weight: 500;
         color: #2c3e50;
     }
+    
+    /* Simple Image Zoom Overlay */
+    .image-lightbox {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .image-lightbox.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .lightbox-content {
+        position: relative;
+        max-width: 600px;
+        max-height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: default;
+    }
+    
+    .lightbox-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        transition: opacity 0.3s ease;
+        opacity: 0;
+    }
+    
+    .lightbox-image.loaded {
+        opacity: 1;
+    }
+    
+    .lightbox-loading {
+        position: absolute;
+        color: white;
+        font-size: 16px;
+    }
+    
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .lightbox-content {
+            max-width: 90vw;
+            max-height: 70vh;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .lightbox-content {
+            max-width: 95vw;
+            max-height: 60vh;
+        }
+    }
     </style>
 </head>
 <body>
@@ -834,31 +928,31 @@
         </div>
 
         <!-- Product Details Section -->
-        <div class="product-details-container" style="max-width: 900px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 40px 24px; display: flex; flex-wrap: wrap; gap: 40px;">
-            <div class="product-image" style="flex: 1 1 320px; min-width: 280px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 12px; height: 320px;">
-                <!-- Dummy image -->
-                <img src="https://via.placeholder.com/240x240?text=Product+Image" alt="Product Name" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+        <div class="product-details-container" style="max-width: 900px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 40px 24px; display: flex; flex-wrap: wrap; gap: 40px; align-items: stretch;">
+            <div class="product-image" style="flex: 1 1 320px; min-width: 280px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 12px;">
+                <!-- Default placeholder using data URL -->
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+" alt="Loading...">
             </div>
             <div class="product-info" style="flex: 2 1 400px; min-width: 280px; display: flex; flex-direction: column; gap: 18px;">
                 <div style="font-size: 13px; color: #777;">Variation: Standard</div>
-                <div class="product-name" style="font-size: 28px; font-weight: 700; color: #2c3e50;">Sample Product Name</div>
+                <div class="product-name" style="font-size: 28px; font-weight: 700; color: #2c3e50;">Loading...</div>
                 <div class="product-meta" style="display: flex; gap: 24px; font-size: 15px; color: #555;">
-                    <div>SKU: <span style="font-weight: 500;">PROD-0001</span></div>
-                    <div>Stock: <span style="color: #34A853; font-weight: 500;">In Stock</span></div>
+                    <div>SKU: <span style="font-weight: 500;">Loading...</span></div>
+                    <div>Stock: <span style="color: #34A853; font-weight: 500;">Loading...</span></div>
                 </div>
-                <div class="product-price" style="font-size: 24px; color: #e21b1b; font-weight: bold;">RM 199.00</div>
+                <div class="product-price" style="font-size: 24px; color: #e21b1b; font-weight: bold;">RM 0.00</div>
                 <div class="product-description" style="font-size: 16px; color: #444; line-height: 1.6; margin: 18px 0;">
                     <strong>Description:</strong><br>
-                    This is a <b>dummy product description</b>. Here you can describe the features, compatibility, and benefits of the product. Replace this text with real product information from your database.
+                    Loading product information...
                 </div>
                 <div style="margin-top: 18px;">
-                    <button class="add-btn" id="showQuantityModal" style="padding: 12px 32px; font-size: 16px;">
+                    <button class="add-btn" id="showQuantityModal" style="padding: 12px 32px; font-size: 16px;" disabled>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="9" cy="21" r="1"></circle>
                             <circle cx="20" cy="21" r="1"></circle>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                         </svg>
-                        Add to Cart
+                        Loading...
                     </button>
                 </div>
             </div>
@@ -874,80 +968,22 @@
             </div>
             <div id="description" class="tab-content active">
                 <h3>Product Description</h3>
-                <p>High-quality OEM casing for Android installation compatible with Volvo XC60 from 2014 to 2018. This premium casing is specifically designed to provide a seamless integration experience for your Volvo XC60, allowing you to upgrade to a modern Android entertainment system while maintaining the original aesthetic of your vehicle's interior.</p>
-                <h4>Key Features:</h4>
-                <ul>
-                    <li>Android 11 operating system with latest features and security updates</li>
-                    <li>GPS navigation with offline maps and real-time traffic updates</li>
-                    <li>Bluetooth connectivity for hands-free calling and audio streaming</li>
-                    <li>WiFi capability for internet access and app downloads</li>
-                    <li>Canbus integration for seamless vehicle system communication</li>
-                    <li>Steering wheel control compatibility</li>
-                    <li>High-definition 9-inch capacitive touchscreen</li>
-                    <li>Professional-grade installation hardware included</li>
-                </ul>
-                <h4>What's Included:</h4>
-                <ul>
-                    <li>OEM Casing Android unit</li>
-                    <li>Wiring harness and connectors</li>
-                    <li>Installation mounting brackets</li>
-                    <li>User manual and installation guide</li>
-                    <li>1-year manufacturer warranty</li>
-                </ul>
+                <p>Loading product description...</p>
             </div>
             <div id="specifications" class="tab-content">
                 <h3>Specifications</h3>
                 <ul>
-                    <li><b>Brand:</b> Volvo</li>
-                    <li><b>Model:</b> XC60</li>
-                    <li><b>Year Range:</b> 2014-2018</li>
-                    <li><b>Operating System:</b> Android 11</li>
-                    <li><b>Screen Size:</b> 9 inches</li>
-                    <li><b>Screen Type:</b> HD Capacitive Touchscreen</li>
-                    <li><b>Color:</b> Black</li>
-                    <li><b>Bluetooth:</b> Yes, v5.0</li>
-                    <li><b>WiFi:</b> 802.11 b/g/n</li>
-                    <li><b>USB Ports:</b> 2x USB 2.0</li>
-                    <li><b>SD Card:</b> Micro SD up to 128GB</li>
-                    <li><b>Material:</b> High-Quality ABS Plastic</li>
-                    <li><b>Weight:</b> 2.8 kg</li>
-                    <li><b>Dimensions:</b> 240 x 135 x 95 mm</li>
-                    <li><b>Warranty:</b> 1 Year</li>
+                    <li>Loading specifications...</li>
                 </ul>
             </div>
             <div id="installation" class="tab-content">
                 <h3>Installation</h3>
-                <p><b>Professional installation is highly recommended</b> for this product. Improper installation may result in damage to your vehicle's electrical system or void your vehicle warranty.</p>
-                <h4>Installation Requirements:</h4>
-                <ul>
-                    <li>Professional car audio technician with Android system experience</li>
-                    <li>Proper dashboard removal tools</li>
-                    <li>Electrical testing equipment</li>
-                    <li>Canbus integration knowledge</li>
-                    <li>2-3 hours installation time</li>
-                </ul>
-                <h4>Installation Process Overview:</h4>
-                <ol>
-                    <li>Disconnect vehicle battery for safety</li>
-                    <li>Remove original dashboard panel and existing unit</li>
-                    <li>Install mounting brackets and casing</li>
-                    <li>Connect wiring harness and canbus adapter</li>
-                    <li>Test all functions before final assembly</li>
-                    <li>Reassemble dashboard and test system operation</li>
-                </ol>
+                <p>Loading installation information...</p>
             </div>
             <div id="compatibility" class="tab-content">
                 <h3>Compatibility</h3>
                 <ul>
-                    <li><b>Confirmed Compatible:</b> Volvo XC60 models from 2014 to 2018</li>
-                    <li><b>Steering Wheel Controls:</b> Fully Compatible</li>
-                    <li><b>Climate Control:</b> Interface Maintained</li>
-                    <li><b>Vehicle Settings:</b> Accessible</li>
-                    <li><b>Original Amplifier:</b> Compatible</li>
-                    <li><b>GPS Navigation:</b> Google Maps</li>
-                    <li><b>App Support:</b> Google Play Store</li>
-                    <li><b>Mirror Link:</b> Android/iOS</li>
-                    <li><b>Backup Camera:</b> If Equipped</li>
+                    <li>Loading compatibility information...</li>
                 </ul>
             </div>
         </div>
@@ -974,6 +1010,14 @@
                     <button class="modal-btn cancel-btn" id="cancelBtn">Cancel</button>
                     <button class="modal-btn confirm-btn" id="addToCartBtn">Add to Cart</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Simple Image Zoom Modal -->
+        <div class="image-lightbox" id="imageLightbox">
+            <div class="lightbox-content">
+                <div class="lightbox-loading" id="lightboxLoading">Loading...</div>
+                <img class="lightbox-image" id="lightboxImage" src="" alt="Product Image">
             </div>
         </div>
     </div>
@@ -1007,69 +1051,121 @@
     }
 
     // Render product details into the page
-    function renderProductDetails(product) {
-        // Image
-        const imgElem = document.querySelector('.product-image img');
-        if (product.image_url) {
-            imgElem.src = product.image_url;
-            imgElem.alt = product.name;
-        } else {
-            imgElem.src = 'https://via.placeholder.com/240x240?text=No+Image';
-            imgElem.alt = 'No Image';
-        }
-        // Name
-        document.querySelector('.product-name').textContent = product.name || '';
-        // Meta
-        document.querySelector('.product-meta').innerHTML = `
-            <div>SKU: <span style="font-weight: 500;">${product.product_id || ''}</span></div>
-            <div>Stock: <span style="color: ${product.quantity > 30 ? '#34A853' : product.quantity > 0 ? '#FBBC05' : '#EA4335'}; font-weight: 500;">
-                ${product.quantity > 30 ? 'In Stock' : product.quantity > 0 ? 'Low Stock' : 'Out of Stock'}
-            </span></div>
-        `;
-        // Price
-        document.querySelector('.product-price').textContent = `RM ${product.price ? product.price.toFixed(2) : '0.00'}`;
-        // Description
-        document.querySelector('.product-description').innerHTML = `<strong>Description:</strong><br>${product.description || 'No description.'}`;
-        // Tabs
-        document.getElementById('description').innerHTML = `
-            <h3>Product Description</h3>
-            <p>${product.description || 'No description.'}</p>
-            <h4>Key Features:</h4>
-            <ul>
-                ${(product.features || '').split('\n').map(f => f ? `<li>${f}</li>` : '').join('')}
-            </ul>
-        `;
-        document.getElementById('specifications').innerHTML = `
-            <h3>Specifications</h3>
-            <ul>
-                <li><b>Brand:</b> ${product.brand || ''}</li>
-                <li><b>Model:</b> ${product.model || ''}</li>
-                <li><b>Year Range:</b> ${product.year_range || ''}</li>
-                <li><b>Screen Size:</b> ${product.screen_size || ''}</li>
-                <li><b>Variant:</b> ${product.variant || ''}</li>
-                <li><b>Specifications:</b> ${product.specifications || ''}</li>
-            </ul>
-        `;
-        document.getElementById('installation').innerHTML = `
-            <h3>Installation</h3>
-            <p>${product.installation_notes || 'No installation notes.'}</p>
-        `;
-        document.getElementById('compatibility').innerHTML = `
-            <h3>Compatibility</h3>
-            <ul>
-                <li>${product.compatibility || 'No compatibility info.'}</li>
-            </ul>
-        `;
-        // Disable add to cart if out of stock
-        const addBtn = document.getElementById('showQuantityModal');
-        if (product.quantity === 0) {
-            addBtn.disabled = true;
-            addBtn.textContent = 'Out of Stock';
-        } else {
-            addBtn.disabled = false;
-            addBtn.textContent = 'Add to Cart';
+    // Debug version of renderProductDetails function
+function renderProductDetails(product) {
+    // 🔍 DETAILED DEBUG LOGGING
+    console.log('=== PRODUCT DEBUG INFO ===');
+    console.log('Full product object:', JSON.stringify(product, null, 2));
+    console.log('Product ID from URL:', getProductIdFromUrl());
+    console.log('Product ID in data:', product.product_id);
+    console.log('Image URL in data:', product.image_url);
+    console.log('Image URL type:', typeof product.image_url);
+    console.log('Image URL length:', product.image_url ? product.image_url.length : 'null');
+    
+    // Check if image element exists
+    const imgElem = document.querySelector('.product-image img');
+    console.log('Image element found:', !!imgElem);
+    console.log('Image element:', imgElem);
+    
+    if (product.image_url && imgElem) {
+        console.log('🖼️ Setting image src to:', product.image_url);
+        
+        // Set up event listeners BEFORE setting src
+        imgElem.onload = function() {
+            console.log('✅ Image loaded successfully!');
+            console.log('Final image src:', this.src);
+            console.log('Image natural dimensions:', this.naturalWidth, 'x', this.naturalHeight);
+        };
+        
+        imgElem.onerror = function(event) {
+            console.log('❌ Image failed to load!');
+            console.log('Failed URL:', this.src);
+            console.log('Error event:', event);
+            console.log('Error details:', event.target.error);
+            
+            // Set a visible error placeholder
+            this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZlYmVlIiBzdHJva2U9IiNmNTg3NzkiIHN0cm9rZS13aWR0aD0iMiIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2Y1ODc3OSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SW1hZ2UgRXJyb3I8L3RleHQ+PHRleHQgeD0iNTAlIiB5PSI2MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjOTA5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5DaGVjayBDb25zb2xlPC90ZXh0Pjwvc3ZnPg==';
+            this.alt = 'Image Loading Error';
+        };
+        
+        // Set the image source
+        imgElem.src = product.image_url;
+        imgElem.alt = product.name;
+        
+        // Add click event listener for lightbox
+        imgElem.addEventListener('click', function() {
+            showImageLightbox(product.image_url, product.name);
+        });
+        
+        console.log('Image src set. Waiting for load/error events...');
+        
+    } else {
+        console.log('❌ Problem detected:');
+        console.log('Has image URL:', !!product.image_url);
+        console.log('Has image element:', !!imgElem);
+        
+        if (imgElem) {
+            imgElem.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIERhdGE8L3RleHQ+PC9zdmc>';
+            imgElem.alt = 'No Data Available';
+            imgElem.style.cursor = 'default'; // Remove pointer cursor for placeholder
         }
     }
+    
+    // Rest of the function - update other elements
+    document.querySelector('.product-name').textContent = product.name || 'Unknown Product';
+    
+    document.querySelector('.product-meta').innerHTML = `
+        <div>SKU: <span style="font-weight: 500;">${product.product_id || 'N/A'}</span></div>
+        <div>Stock: <span style="color: ${product.quantity > 30 ? '#34A853' : product.quantity > 0 ? '#FBBC05' : '#EA4335'}; font-weight: 500;">
+            ${product.quantity > 30 ? 'In Stock' : product.quantity > 0 ? 'Low Stock' : 'Out of Stock'}
+        </span></div>
+    `;
+    
+    document.querySelector('.product-price').textContent = `RM ${product.price ? product.price.toFixed(2) : '0.00'}`;
+    
+    document.querySelector('.product-description').innerHTML = `<strong>Description:</strong><br>${product.description || 'No description available.'}`;
+    
+    // Update tabs (simplified for debugging)
+    document.getElementById('description').innerHTML = `
+        <h3>Product Description</h3>
+        <p>${product.description || 'No description available.'}</p>
+    `;
+    
+    document.getElementById('specifications').innerHTML = `
+        <h3>Specifications</h3>
+        <ul>
+            ${product.brand ? `<li><b>Brand:</b> ${product.brand}</li>` : ''}
+            ${product.model ? `<li><b>Model:</b> ${product.model}</li>` : ''}
+            ${product.year_range ? `<li><b>Year Range:</b> ${product.year_range}</li>` : ''}
+            ${product.screen_size ? `<li><b>Screen Size:</b> ${product.screen_size}</li>` : ''}
+            ${product.variant ? `<li><b>Variant:</b> ${product.variant}</li>` : ''}
+        </ul>
+    `;
+    
+    document.getElementById('installation').innerHTML = `
+        <h3>Installation</h3>
+        <p>${product.installation_notes || 'No installation notes available.'}</p>
+    `;
+    
+    document.getElementById('compatibility').innerHTML = `
+        <h3>Compatibility</h3>
+        <ul>
+            <li>${product.compatibility || 'No compatibility information available.'}</li>
+        </ul>
+    `;
+    
+    // Update add to cart button
+    const addBtn = document.getElementById('showQuantityModal');
+    if (product.quantity === 0) {
+        addBtn.disabled = true;
+        addBtn.innerHTML = 'Out of Stock';
+    } else {
+        addBtn.disabled = false;
+        addBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Add to Cart';
+    }
+    
+    console.log('=== END DEBUG INFO ===');
+}
 
     // Add to cart logic (same as catalog.html, using uuid for product_id)
     async function addToCart() {
@@ -1258,18 +1354,89 @@
     window.addEventListener('DOMContentLoaded', updateTabUnderline);
     window.addEventListener('resize', updateTabUnderline);
 
+    // Simple Image Zoom Functionality
+    function showImageLightbox(imageSrc, imageAlt) {
+        const lightbox = document.getElementById('imageLightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const loadingText = document.getElementById('lightboxLoading');
+        
+        // Reset image state
+        lightboxImage.classList.remove('loaded');
+        loadingText.style.display = 'block';
+        
+        // Set up image load event
+        lightboxImage.onload = function() {
+            loadingText.style.display = 'none';
+            lightboxImage.classList.add('loaded');
+        };
+        
+        lightboxImage.onerror = function() {
+            loadingText.textContent = 'Failed to load image';
+            loadingText.style.display = 'block';
+        };
+        
+        // Set image source and alt text
+        lightboxImage.src = imageSrc;
+        lightboxImage.alt = imageAlt || 'Product Image';
+        
+        // Show lightbox
+        lightbox.classList.add('show');
+        
+        // Simple overflow hidden - no position manipulation
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeLightbox() {
+        const lightbox = document.getElementById('imageLightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const loadingText = document.getElementById('lightboxLoading');
+        
+        // Hide lightbox
+        lightbox.classList.remove('show');
+        
+        // Reset image state
+        lightboxImage.classList.remove('loaded');
+        loadingText.style.display = 'none';
+        loadingText.textContent = 'Loading...';
+        
+        // Restore body scrolling
+        document.body.style.overflow = '';
+    }
+    
+    // Event listeners for lightbox
+    document.addEventListener('DOMContentLoaded', function() {
+        // Close lightbox when clicking outside the content
+        document.getElementById('imageLightbox').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLightbox();
+            }
+        });
+        
+        // Close lightbox with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const lightbox = document.getElementById('imageLightbox');
+                if (lightbox.classList.contains('show')) {
+                    closeLightbox();
+                }
+            }
+        });
+    });
+
     // Setup event listeners and page load
     document.addEventListener('DOMContentLoaded', async function() {
         await checkAuthentication();
         await loadCartCount();
         const productId = getProductIdFromUrl();
         if (!productId) {
-            alert('No product ID specified.');
+            document.querySelector('.product-name').textContent = 'No Product ID';
+            document.querySelector('.product-description').innerHTML = '<strong>Error:</strong><br>No product ID specified in URL.';
             return;
         }
         const product = await fetchProductDetails(productId);
         if (!product) {
-            alert('Product not found.');
+            document.querySelector('.product-name').textContent = 'Product Not Found';
+            document.querySelector('.product-description').innerHTML = '<strong>Error:</strong><br>Product not found in database.';
             return;
         }
         currentProduct = product;
@@ -1289,4 +1456,4 @@
     });
     </script>
 </body>
-</html> 
+</html>
