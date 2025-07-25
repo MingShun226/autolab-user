@@ -1047,7 +1047,25 @@
             console.error('Error fetching product:', error);
             return null;
         }
-        return data;
+
+        // Get current user's status to determine pricing
+        const userStr = sessionStorage.getItem('currentUser');
+        let isVIP = false;
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            isVIP = user.status === 'vip';
+        }
+
+        // Use manufacturing price for VIP customers, retail price for others
+        const displayPrice = isVIP && data.manu_price ? data.manu_price : data.price;
+        
+        return {
+            ...data,
+            displayPrice: displayPrice || 0,
+            originalPrice: data.price,
+            manu_price: data.manu_price || 0,
+            isVIPPrice: isVIP && data.manu_price
+        };
     }
 
     // Render product details into the page
@@ -1121,7 +1139,9 @@ function renderProductDetails(product) {
         </span></div>
     `;
     
-    document.querySelector('.product-price').textContent = `RM ${product.price ? product.price.toFixed(2) : '0.00'}`;
+    const priceElement = document.querySelector('.product-price');
+    const displayPrice = product.displayPrice || product.price || 0;
+    priceElement.innerHTML = `RM ${displayPrice.toFixed(2)}${product.isVIPPrice ? '<span style="color: var(--secondary-600); font-size: 16px; margin-left: 8px;">(B2B Price)</span>' : ''}`;
     
     document.querySelector('.product-description').innerHTML = `<strong>Description:</strong><br>${product.description || 'No description available.'}`;
     
@@ -1306,6 +1326,20 @@ function renderProductDetails(product) {
         const initials = user.name ? user.name.charAt(0) : 'C';
         document.getElementById('userAvatar').textContent = initials;
         document.getElementById('userName').textContent = user.name || 'Customer';
+        
+        // Update user status display
+        const userStatusElement = document.querySelector('.user-info div:last-child div:last-child');
+        if (userStatusElement) {
+            if (user.status === 'vip') {
+                userStatusElement.innerHTML = '<span style="color: var(--secondary-600); font-weight: 600;">VIP Customer</span>';
+            } else {
+                userStatusElement.textContent = 'Customer';
+            }
+        }
+        
+        // Refresh product pricing when user status changes
+        refreshProductPricing();
+        
         document.getElementById('userAvatar').addEventListener('click', toggleDropdown);
         document.addEventListener('click', function (e) {
             const dropdown = document.getElementById('userDropdown');
@@ -1315,6 +1349,36 @@ function renderProductDetails(product) {
             }
         });
         document.getElementById('logoutButton').addEventListener('click', logout);
+    }
+
+    // Refresh product pricing based on current user status
+    async function refreshProductPricing() {
+        if (!currentProduct) return;
+
+        // Get current user's status
+        const userStr = sessionStorage.getItem('currentUser');
+        let isVIP = false;
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            isVIP = user.status === 'vip';
+        }
+
+        // Update product pricing based on VIP status
+        const displayPrice = isVIP && currentProduct.manu_price ? currentProduct.manu_price : currentProduct.originalPrice || currentProduct.price;
+        currentProduct.displayPrice = displayPrice;
+        currentProduct.isVIPPrice = isVIP && currentProduct.manu_price;
+
+        // Update the price display
+        const priceElement = document.querySelector('.product-price');
+        if (priceElement) {
+            priceElement.innerHTML = `RM ${displayPrice.toFixed(2)}${currentProduct.isVIPPrice ? '<span style="color: var(--secondary-600); font-size: 16px; margin-left: 8px;">(B2B Price)</span>' : ''}`;
+        }
+
+        if (isVIP) {
+            console.log('✅ Product pricing updated for VIP customer - showing manufacturing price');
+        } else {
+            console.log('✅ Product pricing updated for regular customer - showing retail price');
+        }
     }
     function toggleDropdown() {
         const dropdown = document.getElementById('userDropdown');

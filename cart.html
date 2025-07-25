@@ -709,7 +709,10 @@
                             <div class="cart-item-details">
                                 <div class="cart-item-name">${item.product.name}</div>
                                 <div class="cart-item-sku">${item.product.product_id}</div>
-                                <div class="cart-item-price">RM ${item.product.price.toFixed(2)}</div>
+                                <div class="cart-item-price">
+                    RM ${item.product.price.toFixed(2)}
+                    ${item.product.isVIPPrice ? '<span style="color: var(--secondary-600); font-size: 12px; display: block;">(B2B Price)</span>' : ''}
+                </div>
                             </div>
                             <div class="cart-item-actions">
                                 <div class="quantity-control">
@@ -1145,7 +1148,7 @@ async function testN8nConnection() {
 
                 const { data: productData, error: productError } = await supabase
                     .from('products')
-                    .select('id, product_id, name, price, quantity, category, image_url') // REMOVED variations
+                    .select('id, product_id, name, price, manu_price, quantity, category, image_url') // Added manu_price
                     .in('id', productIds);
 
                 if (productError) {
@@ -1161,20 +1164,41 @@ async function testN8nConnection() {
                     products[product.id] = product;
                 });
 
-                // Map cart items with product details
+                // Get current user's VIP status for pricing
+                const userStr = sessionStorage.getItem('currentUser');
+                let isVIP = false;
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    isVIP = user.status === 'vip';
+                }
+
+                // Map cart items with product details and VIP pricing
                 cartItems = cart.map(item => {
                     const product = products[item.product_id];
                     if (!product) {
                         console.warn(`Product not found for ID: ${item.product_id}`);
                         return null;
                     }
+
+                    // Apply VIP pricing if applicable
+                    const displayPrice = isVIP && product.manu_price ? product.manu_price : product.price;
+                    const productWithPricing = {
+                        ...product,
+                        price: displayPrice,
+                        originalPrice: product.price,
+                        manu_price: product.manu_price || 0,
+                        isVIPPrice: isVIP && product.manu_price
+                    };
+
                     return {
                         id: item.id,
                         productId: item.product_id,
                         quantity: item.quantity,
-                        product: product
+                        product: productWithPricing
                     };
-                }).filter(item => item !== null); // Remove any null items (products not found)
+                }).filter(item => item !== null);
+
+                console.log(isVIP ? '✅ VIP customer detected - cart showing manufacturing prices' : '✅ Regular customer - cart showing retail prices'); // Remove any null items (products not found)
 
                 console.log("Mapped cart items:", cartItems);
 
@@ -1255,7 +1279,10 @@ async function testN8nConnection() {
             <div class="cart-item-details">
                 <div class="cart-item-name">${item.product.name}</div>
                 <div class="cart-item-sku">${item.product.product_id}</div>
-                <div class="cart-item-price">RM ${item.product.price.toFixed(2)}</div>
+                <div class="cart-item-price">
+                    RM ${item.product.price.toFixed(2)}
+                    ${item.product.isVIPPrice ? '<span style="color: var(--secondary-600); font-size: 12px; display: block;">(B2B Price)</span>' : ''}
+                </div>
             </div>
             <div class="cart-item-actions">
                 <div class="quantity-control">
@@ -1456,6 +1483,19 @@ async function testN8nConnection() {
                 userName.textContent = user.name || 'Customer';
             }
 
+            // Update user status display
+            const userStatusElement = document.querySelector('.user-info div:last-child div:last-child');
+            if (userStatusElement) {
+                if (user.status === 'vip') {
+                    userStatusElement.innerHTML = '<span style="color: var(--secondary-600); font-weight: 600;">VIP Customer</span>';
+                } else {
+                    userStatusElement.textContent = 'Customer';
+                }
+            }
+
+            // Refresh cart pricing when user status changes
+            refreshCartPricing();
+
             // Set up event listeners for dropdown
             if (userAvatar) {
                 userAvatar.addEventListener('click', toggleDropdown);
@@ -1475,6 +1515,44 @@ async function testN8nConnection() {
             const logoutButton = document.getElementById('logoutButton');
             if (logoutButton) {
                 logoutButton.addEventListener('click', logout);
+            }
+        }
+
+        // Refresh cart pricing based on current user status
+        async function refreshCartPricing() {
+            if (!cartItems || cartItems.length === 0) return;
+
+            // Get current user's status
+            const userStr = sessionStorage.getItem('currentUser');
+            let isVIP = false;
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                isVIP = user.status === 'vip';
+            }
+
+            // Update each cart item's product pricing
+            cartItems = cartItems.map(item => {
+                if (!item.product) return item;
+
+                const displayPrice = isVIP && item.product.manu_price ? item.product.manu_price : item.product.originalPrice || item.product.price;
+                
+                return {
+                    ...item,
+                    product: {
+                        ...item.product,
+                        price: displayPrice,
+                        isVIPPrice: isVIP && item.product.manu_price
+                    }
+                };
+            });
+
+            // Re-render cart display with updated pricing
+            updateCartDisplay();
+
+            if (isVIP) {
+                console.log('✅ Cart pricing updated for VIP customer - showing manufacturing prices');
+            } else {
+                console.log('✅ Cart pricing updated for regular customer - showing retail prices');
             }
         }
 

@@ -704,8 +704,19 @@
             transform: translateX(26px);
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        // Supabase Configuration
+        const supabaseUrl = 'https://bbwimjvqpyxwhovihtfm.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid2ltanZxcHl4d2hvdmlodGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjAwMDksImV4cCI6MjA2MDk5NjAwOX0._D3wackPNKg-IbiswH7M-3wqeQRP6ujMmcJ9bb7_1z0';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let currentUser = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check user authentication and load profile data
+            await checkAuthentication();
+            
             // Make cart icon clickable
             const cartIcon = document.querySelector('.cart-icon');
             if (cartIcon) {
@@ -715,15 +726,154 @@
                 cartIcon.style.cursor = 'pointer';
             }
             
-            // Initialize cart count from localStorage or default to 0
-            let cartCount = parseInt(localStorage.getItem('cartCount') || '0');
-            
-            // Update the cart count display
-            const cartCountElement = document.querySelector('.cart-count');
-            if (cartCountElement) {
-                cartCountElement.textContent = cartCount;
-            }
+            // Load cart count
+            await loadCartCount();
         });
+
+        // Check user authentication and load profile
+        async function checkAuthentication() {
+            const userStr = sessionStorage.getItem('currentUser');
+            if (userStr) {
+                currentUser = JSON.parse(userStr);
+                await loadUserProfile(currentUser);
+            } else {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: customer, error } = await supabase
+                        .from('customers')
+                        .select('*')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (!error && customer) {
+                        currentUser = customer;
+                        sessionStorage.setItem('currentUser', JSON.stringify(customer));
+                        await loadUserProfile(customer);
+                    } else {
+                        window.location.href = "customer-login.html";
+                    }
+                } else {
+                    window.location.href = "customer-login.html";
+                }
+            }
+        }
+
+        // Load and display user profile data
+        async function loadUserProfile(user) {
+            // Update user avatar and name in header
+            const userAvatar = document.querySelector('.user-avatar');
+            const profileAvatar = document.querySelector('.profile-avatar');
+            const profileName = document.querySelector('.profile-name');
+            
+            if (user.name) {
+                const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                if (userAvatar) userAvatar.textContent = initials;
+                if (profileAvatar) profileAvatar.textContent = initials;
+                if (profileName) profileName.textContent = user.name;
+            }
+
+            // Update profile company (use address or default)
+            const profileCompany = document.querySelector('.profile-company');
+            if (profileCompany) {
+                profileCompany.textContent = user.address || 'Customer Account';
+            }
+
+            // Update personal information form fields
+            const nameInput = document.querySelector('input[value="David"]');
+            const lastNameInput = document.querySelector('input[value="Chen"]');
+            const emailInput = document.querySelector('input[value="david.chen@protonsc.com.my"]');
+            const phoneInput = document.querySelector('input[value="+60 3-7956 1234"]');
+            const companyInput = document.querySelector('input[value="Proton Service Center KL"]');
+
+            if (nameInput && user.name) {
+                const nameParts = user.name.split(' ');
+                nameInput.value = nameParts[0] || '';
+                if (lastNameInput && nameParts.length > 1) {
+                    lastNameInput.value = nameParts.slice(1).join(' ');
+                }
+            }
+            
+            if (emailInput && user.email) emailInput.value = user.email;
+            if (phoneInput && user.phone) phoneInput.value = user.phone;
+            if (companyInput && user.address) companyInput.value = user.address;
+
+            // Display VIP status if applicable
+            displayVIPStatus(user);
+
+            // Update addresses section with user data
+            updateAddressesSection(user);
+        }
+
+        // Display VIP status in profile
+        function displayVIPStatus(user) {
+            const profileCompany = document.querySelector('.profile-company');
+            if (user.status === 'vip' && profileCompany) {
+                profileCompany.innerHTML = `${profileCompany.textContent} <span style="color: var(--primary-600); font-weight: bold;">(VIP Customer)</span>`;
+            }
+            
+            // Add VIP badge to profile name if VIP
+            if (user.status === 'vip') {
+                const profileName = document.querySelector('.profile-name');
+                if (profileName && !profileName.querySelector('.vip-badge')) {
+                    profileName.innerHTML = `${profileName.textContent} <span class="vip-badge" style="background: linear-gradient(135deg, var(--primary-500), var(--secondary-500)); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">VIP</span>`;
+                }
+            }
+
+            console.log('VIP Status Check:', {
+                name: user.name,
+                status: user.status,
+                isVIP: user.status === 'vip'
+            });
+        }
+
+        // Update addresses section with user data
+        function updateAddressesSection(user) {
+            const addressContent = document.querySelector('.address-content');
+            if (addressContent && user.address) {
+                // Split address into lines if it contains line breaks or commas
+                const addressLines = user.address.includes('\n') 
+                    ? user.address.split('\n') 
+                    : user.address.split(',').map(line => line.trim());
+                
+                let formattedAddress = addressLines.join('<br>');
+                if (user.phone) {
+                    formattedAddress += `<br>${user.phone}`;
+                }
+                
+                addressContent.innerHTML = formattedAddress;
+            }
+
+            const addressName = document.querySelector('.address-name');
+            if (addressName && user.name) {
+                addressName.textContent = user.name;
+            }
+        }
+
+        // Load cart count
+        async function loadCartCount() {
+            try {
+                if (!currentUser) return;
+
+                const { data: cartItems, error } = await supabase
+                    .from('cart_items')
+                    .select('quantity')
+                    .eq('customer_id', currentUser.id);
+
+                if (!error && cartItems) {
+                    const totalItems = cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                    const cartCountElement = document.querySelector('.cart-count');
+                    if (cartCountElement) {
+                        cartCountElement.textContent = totalItems;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart count:', error);
+                const cartCountElement = document.querySelector('.cart-count');
+                if (cartCountElement) {
+                    cartCountElement.textContent = '0';
+                }
+            }
+        }
     </script>
 </head>
 <body>

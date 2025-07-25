@@ -1779,6 +1779,31 @@
             const applyFiltersBtn = document.getElementById('applyAdvancedFilters');
             const clearFiltersBtn = document.getElementById('clearAdvancedFilters');
 
+            // Debug function to test VIP status (remove in production)
+            window.testVIPStatus = function() {
+                const userStr = sessionStorage.getItem('currentUser');
+                if (!userStr) {
+                    console.log('❌ No user logged in');
+                    return;
+                }
+                
+                const user = JSON.parse(userStr);
+                console.log('👤 Current User:', {
+                    name: user.name,
+                    status: user.status,
+                    email: user.email,
+                    isVIP: user.status === 'vip'
+                });
+                
+                // Show VIP pricing info for first 3 products
+                if (products && products.length > 0) {
+                    console.log('💰 Sample Product Pricing:');
+                    products.slice(0, 3).forEach(product => {
+                        console.log(`- ${product.name}: Retail RM${product.originalPrice || 'N/A'}, Manu RM${product.manu_price || 'N/A'}, Displayed RM${product.price}`);
+                    });
+                }
+            };
+
             document.addEventListener('DOMContentLoaded', async function () {
                 // Check user authentication
                 await checkAuthentication();
@@ -1805,31 +1830,209 @@
 
             // Check user authentication
             async function checkAuthentication() {
-                const userStr = sessionStorage.getItem('currentUser');
-                if (userStr) {
-                    const user = JSON.parse(userStr);
-                    updateUIForLoggedInUser(user);
-                } else {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user) {
-                        const { data: customer, error } = await supabase
-                            .from('customers')
-                            .select('*')
-                            .eq('id', user.id)
-                            .single();
+    try {
+        // Always get fresh data from Supabase auth
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = "customer-login.html";
+            return;
+        }
 
-                        if (!error && customer) {
-                            sessionStorage.setItem('currentUser', JSON.stringify(customer));
-                            updateUIForLoggedInUser(customer);
-                        } else {
-                            window.location.href = "customer-login.html";
-                        }
-                    } else {
-                        window.location.href = "customer-login.html";
-                    }
-                }
+        // Get phone number from Supabase auth user
+        let phoneNumber = null;
+        
+        // Method 1: If using phone auth, phone is in user.phone
+        if (user.phone) {
+            phoneNumber = user.phone;
+        }
+        // Method 2: If phone is stored in user metadata
+        else if (user.user_metadata && user.user_metadata.phone) {
+            phoneNumber = user.user_metadata.phone;
+        }
+        // Method 3: If phone is stored in app metadata
+        else if (user.app_metadata && user.app_metadata.phone) {
+            phoneNumber = user.app_metadata.phone;
+        }
+
+        console.log('🔍 Auth user phone number:', phoneNumber);
+
+        if (!phoneNumber) {
+            console.error('No phone number found in auth user');
+            window.location.href = "customer-login.html";
+            return;
+        }
+
+        // Query customer by phone number
+        const { data: customer, error } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('phone', phoneNumber)
+            .single();
+
+        if (error || !customer) {
+            console.error('Customer not found by phone:', { phoneNumber, error });
+            // Try alternative phone formats
+            const alternativeCustomer = await tryAlternativePhoneFormats(phoneNumber);
+            if (!alternativeCustomer) {
+                window.location.href = "customer-login.html";
+                return;
+            }
+            customer = alternativeCustomer;
+        }
+
+        // Always update sessionStorage with fresh data
+        sessionStorage.setItem('currentUser', JSON.stringify(customer));
+        console.log('✅ Fresh user data loaded by phone:', {
+            name: customer.name,
+            phone: customer.phone,
+            status: customer.status,
+            isVIP: customer.status === 'vip'
+        });
+        
+        updateUIForLoggedInUser(customer);
+    } catch (error) {
+        console.error('Authentication error:', error);
+        window.location.href = "customer-login.html";
+    }
+}
+
+async function tryAlternativePhoneFormats(originalPhone) {
+    console.log('🔄 Trying alternative phone formats for:', originalPhone);
+    
+    // Create different phone number formats to try
+    const phoneFormats = [];
+    
+    // Remove all non-digits
+    const digitsOnly = originalPhone.replace(/\D/g, '');
+    
+    // Common Malaysian phone formats
+    phoneFormats.push(digitsOnly); // 60123456789
+    phoneFormats.push(`+${digitsOnly}`); // +60123456789
+    phoneFormats.push(`0${digitsOnly.substring(2)}`); // 0123456789 (remove country code)
+    phoneFormats.push(originalPhone); // Original format
+    
+    // If it starts with +60, try without country code
+    if (digitsOnly.startsWith('60')) {
+        phoneFormats.push(`0${digitsOnly.substring(2)}`);
+    }
+    
+    // If it starts with 0, try with country code
+    if (digitsOnly.startsWith('0')) {
+        phoneFormats.push(`60${digitsOnly.substring(1)}`);
+        phoneFormats.push(`+60${digitsOnly.substring(1)}`);
+    }
+
+    console.log('📱 Phone formats to try:', phoneFormats);
+
+    // Try each format
+    for (const phoneFormat of phoneFormats) {
+        try {
+            const { data: customer, error } = await supabase
+                .from('customers')
+                .select('*')
+                .eq('phone', phoneFormat)
+                .single();
+
+            if (!error && customer) {
+                console.log('✅ Found customer with phone format:', phoneFormat);
+                return customer;
+            }
+        } catch (err) {
+            // Continue to next format
+            continue;
+        }
+    }
+
+    console.error('❌ No customer found with any phone format');
+    return null;
+}
+
+// Updated debug function for phone-based authentication
+window.debugVIPStatusByPhone = async function() {
+    console.log('=== VIP STATUS DEBUG (PHONE-BASED) ===');
+    
+    // Check sessionStorage
+    const userStr = sessionStorage.getItem('currentUser');
+    console.log('📦 SessionStorage data:', userStr ? JSON.parse(userStr) : 'No data');
+    
+    // Check Supabase auth
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('🔐 Supabase auth user:', user);
+    
+    if (user) {
+        // Extract phone number from different possible locations
+        let phoneNumber = user.phone || 
+                         (user.user_metadata && user.user_metadata.phone) || 
+                         (user.app_metadata && user.app_metadata.phone);
+        
+        console.log('📱 Extracted phone number:', phoneNumber);
+        
+        if (phoneNumber) {
+            // Try querying by phone
+            const { data: customerByPhone, error: errorByPhone } = await supabase
+                .from('customers')
+                .select('*')
+                .eq('phone', phoneNumber)
+                .single();
+            console.log('📞 Query by phone:', { phoneNumber, customerByPhone, errorByPhone });
+            
+            // If direct query fails, try alternative formats
+            if (errorByPhone || !customerByPhone) {
+                console.log('🔄 Trying alternative phone formats...');
+                const alternativeCustomer = await tryAlternativePhoneFormats(phoneNumber);
+                console.log('📱 Alternative format result:', alternativeCustomer);
+            }
+        }
+        
+        // Show sample customers with their phone numbers
+        const { data: sampleCustomers, error: sampleError } = await supabase
+            .from('customers')
+            .select('name, phone, status')
+            .limit(5);
+        console.log('👥 Sample customers with phones:', sampleCustomers);
+    }
+};
+
+// Updated refresh user data function
+async function refreshUserData() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            // Get phone number
+            let phoneNumber = user.phone || 
+                             (user.user_metadata && user.user_metadata.phone) || 
+                             (user.app_metadata && user.app_metadata.phone);
+
+            if (!phoneNumber) {
+                console.error('No phone number found in auth user');
+                return null;
             }
 
+            const { data: customer, error } = await supabase
+                .from('customers')
+                .select('*')
+                .eq('phone', phoneNumber)
+                .single();
+
+            if (!error && customer) {
+                sessionStorage.setItem('currentUser', JSON.stringify(customer));
+                console.log('✅ User data refreshed by phone:', customer);
+                return customer;
+            } else {
+                // Try alternative phone formats
+                const alternativeCustomer = await tryAlternativePhoneFormats(phoneNumber);
+                if (alternativeCustomer) {
+                    sessionStorage.setItem('currentUser', JSON.stringify(alternativeCustomer));
+                    console.log('✅ User data refreshed with alternative phone format:', alternativeCustomer);
+                    return alternativeCustomer;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error refreshing user data:', error);
+    }
+    return null;
+}
             // Fetch products from database - UPDATED FOR NEW SCHEMA
             async function fetchProducts() {
                 try {
@@ -1844,33 +2047,69 @@
                         return;
                     }
 
+                    // Get current user's status to determine pricing
+                    const userStr = sessionStorage.getItem('currentUser');
+                    let isVIP = false;
+                    if (userStr) {
+                        const user = JSON.parse(userStr);
+                        isVIP = user.status === 'vip';
+                        console.log('🔍 User Status Check:', {
+                            userName: user.name,
+                            userStatus: user.status,
+                            isVIP: isVIP
+                        });
+                    } else {
+                        console.log('⚠️ No user found in sessionStorage');
+                    }
+
                     // Map to format expected by UI - UPDATED FOR NEW SCHEMA
-                    products = data.map(product => ({
-                        id: product.product_id,
-                        uuid: product.id, // Keep UUID for cart operations
-                        name: product.name,
-                        category: product.category,
-                        brand: product.brand,
-                        model: product.model,
-                        stock: product.quantity || 0,
-                        price: product.price || 0,
-                        originalPrice: product.price,
-                        screen_size: product.screen_size,
-                        variant: product.variant,
-                        year_range: product.year_range,
-                        image_url: product.image_url,
-                        description: product.description,
-                        features: product.features,
-                        specifications: product.specifications,
-                        compatibility: product.compatibility,
-                        part_numbers: product.part_numbers,
-                        installation_notes: product.installation_notes,
-                        warranty_info: product.warranty_info,
-                        featured: product.featured
-                    }));
+                    products = data.map(product => {
+                        // Use manufacturing price for VIP customers, retail price for others
+                        const displayPrice = isVIP && product.manu_price ? product.manu_price : product.price;
+                        
+                        // Debug pricing for first few products
+                        if (data.indexOf(product) < 3) {
+                            console.log(`💰 Product ${product.name} pricing:`, {
+                                retailPrice: product.price,
+                                manuPrice: product.manu_price,
+                                displayPrice: displayPrice,
+                                isVIP: isVIP,
+                                willShowVIPPrice: isVIP && product.manu_price
+                            });
+                        }
+                        
+                        return {
+                            id: product.product_id,
+                            uuid: product.id, // Keep UUID for cart operations
+                            name: product.name,
+                            category: product.category,
+                            brand: product.brand,
+                            model: product.model,
+                            stock: product.quantity || 0,
+                            price: displayPrice || 0,
+                            originalPrice: product.price,
+                            manu_price: product.manu_price || 0,
+                            isVIPPrice: isVIP && product.manu_price,
+                            screen_size: product.screen_size,
+                            variant: product.variant,
+                            year_range: product.year_range,
+                            image_url: product.image_url,
+                            description: product.description,
+                            features: product.features,
+                            specifications: product.specifications,
+                            compatibility: product.compatibility,
+                            part_numbers: product.part_numbers,
+                            installation_notes: product.installation_notes,
+                            warranty_info: product.warranty_info,
+                            featured: product.featured
+                        };
+                    });
 
                     currentProducts = [...products];
                     console.log(`✅ Fetched ${products.length} products successfully`);
+                    if (isVIP) {
+                        console.log('✅ VIP customer detected - showing manufacturing prices');
+                    }
                 } catch (error) {
                     console.error('Error:', error);
                 }
@@ -2076,7 +2315,10 @@
                                 <div>${product.stock} in stock</div>
                             </div>
                             <div class="product-features">${(product.features || '').substring(0, 80)}${product.features && product.features.length > 80 ? '...' : ''}</div>
-                            <div class="product-price">RM ${product.price.toFixed(2)}</div>
+                            <div class="product-price">
+                                RM ${product.price.toFixed(2)}
+                                ${product.isVIPPrice ? '<span style="color: var(--secondary-600); font-size: 12px; margin-left: 5px;">(B2B Price)</span>' : ''}
+                            </div>
                             <div class="product-actions">
                                 <button class="add-btn" ${product.stock === 0 ? 'disabled' : ''}>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2412,6 +2654,19 @@
                 document.getElementById('userAvatar').textContent = initials;
                 document.getElementById('userName').textContent = user.name || 'Customer';
 
+                // Update user status display
+                const userStatusElement = document.querySelector('.user-info div:last-child div:last-child');
+                if (userStatusElement) {
+                    if (user.status === 'vip') {
+                        userStatusElement.innerHTML = '<span style="color: var(--secondary-600); font-weight: 600;">VIP Customer</span>';
+                    } else {
+                        userStatusElement.textContent = 'Customer';
+                    }
+                }
+
+                // If user status changed, refresh products to update pricing
+                refreshProductPricing();
+
                 document.getElementById('userAvatar').addEventListener('click', toggleDropdown);
                 document.addEventListener('click', function (e) {
                     const dropdown = document.getElementById('userDropdown');
@@ -2421,6 +2676,45 @@
                     }
                 });
                 document.getElementById('logoutButton').addEventListener('click', logout);
+            }
+
+            // Refresh product pricing based on current user status
+            async function refreshProductPricing() {
+                if (!products || products.length === 0) return;
+
+                // Get current user's status
+                const userStr = sessionStorage.getItem('currentUser');
+                let isVIP = false;
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    isVIP = user.status === 'vip';
+                    console.log('🔄 Refreshing pricing for user:', {
+                        userName: user.name,
+                        userStatus: user.status,
+                        isVIP: isVIP
+                    });
+                }
+
+                // Update product prices based on VIP status
+                products = products.map(product => {
+                    const displayPrice = isVIP && product.manu_price ? product.manu_price : product.originalPrice;
+                    return {
+                        ...product,
+                        price: displayPrice,
+                        isVIPPrice: isVIP && product.manu_price
+                    };
+                });
+
+                currentProducts = [...products];
+                
+                // Re-render products with updated pricing
+                filterProducts();
+                
+                if (isVIP) {
+                    console.log('✅ Pricing updated for VIP customer - showing manufacturing prices');
+                } else {
+                    console.log('✅ Pricing updated for regular customer - showing retail prices');
+                }
             }
 
             // Toggle dropdown menu
