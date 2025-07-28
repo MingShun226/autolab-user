@@ -711,7 +711,7 @@
                                 <div class="cart-item-sku">${item.product.product_id}</div>
                                 <div class="cart-item-price">
                     RM ${item.product.price.toFixed(2)}
-                    ${item.product.isVIPPrice ? '<span style="color: var(--secondary-600); font-size: 12px; display: block;">(B2B Price)</span>' : ''}
+                    ${item.product.isMerchantPrice ? '<span style="color: var(--secondary-600); font-size: 12px; display: block;">(B2B Price)</span>' : ''}
                 </div>
                             </div>
                             <div class="cart-item-actions">
@@ -766,7 +766,14 @@
         // Supabase configuration
         const supabaseUrl = 'https://bbwimjvqpyxwhovihtfm.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid2ltanZxcHl4d2hvdmlodGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjAwMDksImV4cCI6MjA2MDk5NjAwOX0._D3wackPNKg-IbiswH7M-3wqeQRP6ujMmcJ9bb7_1z0';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                persistSession: true,
+                storage: window.localStorage,
+                autoRefreshToken: true,
+                detectSessionInUrl: false
+            }
+        });
 
         // n8n Webhook Configuration
         const N8N_WEBHOOK_URL = 'https://apipietech.app.n8n.cloud/webhook/unified-whatsapp';
@@ -1164,15 +1171,15 @@ async function testN8nConnection() {
                     products[product.id] = product;
                 });
 
-                // Get current user's VIP status for pricing
+                // Get current user's Merchant status for pricing
                 const userStr = sessionStorage.getItem('currentUser');
-                let isVIP = false;
+                let isMerchant = false;
                 if (userStr) {
                     const user = JSON.parse(userStr);
-                    isVIP = user.status === 'vip';
+                    isMerchant = user.status === 'merchant';
                 }
 
-                // Map cart items with product details and VIP pricing
+                // Map cart items with product details and Merchant pricing
                 cartItems = cart.map(item => {
                     const product = products[item.product_id];
                     if (!product) {
@@ -1180,14 +1187,14 @@ async function testN8nConnection() {
                         return null;
                     }
 
-                    // Apply VIP pricing if applicable
-                    const displayPrice = isVIP && product.manu_price ? product.manu_price : product.price;
+                    // Apply Merchant pricing if applicable
+                    const displayPrice = isMerchant && product.manu_price ? product.manu_price : product.price;
                     const productWithPricing = {
                         ...product,
                         price: displayPrice,
                         originalPrice: product.price,
                         manu_price: product.manu_price || 0,
-                        isVIPPrice: isVIP && product.manu_price
+                        isMerchantPrice: isMerchant && product.manu_price
                     };
 
                     return {
@@ -1198,7 +1205,7 @@ async function testN8nConnection() {
                     };
                 }).filter(item => item !== null);
 
-                console.log(isVIP ? '✅ VIP customer detected - cart showing manufacturing prices' : '✅ Regular customer - cart showing retail prices'); // Remove any null items (products not found)
+                console.log(isMerchant ? '✅ Merchant customer detected - cart showing manufacturing prices' : '✅ Regular customer - cart showing retail prices'); // Remove any null items (products not found)
 
                 console.log("Mapped cart items:", cartItems);
 
@@ -1281,7 +1288,7 @@ async function testN8nConnection() {
                 <div class="cart-item-sku">${item.product.product_id}</div>
                 <div class="cart-item-price">
                     RM ${item.product.price.toFixed(2)}
-                    ${item.product.isVIPPrice ? '<span style="color: var(--secondary-600); font-size: 12px; display: block;">(B2B Price)</span>' : ''}
+                    ${item.product.isMerchantPrice ? '<span style="color: var(--secondary-600); font-size: 12px; display: block;">(B2B Price)</span>' : ''}
                 </div>
             </div>
             <div class="cart-item-actions">
@@ -1470,12 +1477,9 @@ async function testN8nConnection() {
 
         // Update UI for logged-in user
         function updateUIForLoggedInUser(user) {
-            // Update avatar with initials (first letter of name)
-            const userAvatar = document.getElementById('userAvatar');
-            if (userAvatar) {
-                const initials = user.name ? user.name.charAt(0) : 'C';
-                userAvatar.textContent = initials;
-            }
+    const initials = user.name ? user.name.charAt(0) : 'C';
+    document.getElementById('userAvatar').textContent = initials;
+    document.getElementById('userName').textContent = user.name || 'Customer';
 
             // Update user name
             const userName = document.getElementById('userName');
@@ -1484,14 +1488,14 @@ async function testN8nConnection() {
             }
 
             // Update user status display
-            const userStatusElement = document.querySelector('.user-info div:last-child div:last-child');
-            if (userStatusElement) {
-                if (user.status === 'vip') {
-                    userStatusElement.innerHTML = '<span style="color: var(--secondary-600); font-weight: 600;">VIP Customer</span>';
-                } else {
-                    userStatusElement.textContent = 'Customer';
-                }
-            }
+            const userStatusElement = document.querySelector('.user-info > div:nth-child(2) > div:last-child');
+    if (userStatusElement) {
+        if (user.status === 'merchant') {
+            userStatusElement.innerHTML = '<span style="color: var(--secondary-600); font-weight: 600;">Merchant Customer</span>';
+        } else {
+            userStatusElement.textContent = 'Customer';
+        }
+    }
 
             // Refresh cart pricing when user status changes
             refreshCartPricing();
@@ -1524,24 +1528,24 @@ async function testN8nConnection() {
 
             // Get current user's status
             const userStr = sessionStorage.getItem('currentUser');
-            let isVIP = false;
+            let isMerchant = false;
             if (userStr) {
                 const user = JSON.parse(userStr);
-                isVIP = user.status === 'vip';
+                isMerchant = user.status === 'merchant';
             }
 
             // Update each cart item's product pricing
             cartItems = cartItems.map(item => {
                 if (!item.product) return item;
 
-                const displayPrice = isVIP && item.product.manu_price ? item.product.manu_price : item.product.originalPrice || item.product.price;
+                const displayPrice = isMerchant && item.product.manu_price ? item.product.manu_price : item.product.originalPrice || item.product.price;
                 
                 return {
                     ...item,
                     product: {
                         ...item.product,
                         price: displayPrice,
-                        isVIPPrice: isVIP && item.product.manu_price
+                        isMerchantPrice: isMerchant && item.product.manu_price
                     }
                 };
             });
@@ -1549,8 +1553,8 @@ async function testN8nConnection() {
             // Re-render cart display with updated pricing
             updateCartDisplay();
 
-            if (isVIP) {
-                console.log('✅ Cart pricing updated for VIP customer - showing manufacturing prices');
+            if (isMerchant) {
+                console.log('✅ Cart pricing updated for Merchant customer - showing manufacturing prices');
             } else {
                 console.log('✅ Cart pricing updated for regular customer - showing retail prices');
             }
@@ -2308,17 +2312,9 @@ async function proceedToCheckout() {
                         const altAddressValue = document.getElementById('alt-address-text').value.trim();
 
                         if (addressType === 'primary') {
-                            if (!primaryAddressValue) {
-                                alert('Please enter your primary address');
-                                return;
-                            }
-                            deliveryAddress = primaryAddressValue;
+                            deliveryAddress = primaryAddressValue || 'Address to be provided';
                         } else {
-                            if (!altAddressValue) {
-                                alert('Please enter your alternative address');
-                                return;
-                            }
-                            deliveryAddress = altAddressValue;
+                            deliveryAddress = altAddressValue || 'Alternative address to be provided';
                         }
 
                         // Set driver based on delivery method

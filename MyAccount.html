@@ -709,7 +709,14 @@
         // Supabase Configuration
         const supabaseUrl = 'https://bbwimjvqpyxwhovihtfm.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid2ltanZxcHl4d2hvdmlodGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjAwMDksImV4cCI6MjA2MDk5NjAwOX0._D3wackPNKg-IbiswH7M-3wqeQRP6ujMmcJ9bb7_1z0';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                persistSession: true,
+                storage: window.localStorage,
+                autoRefreshToken: true,
+                detectSessionInUrl: false
+            }
+        });
 
         let currentUser = null;
 
@@ -735,6 +742,31 @@
             const userStr = sessionStorage.getItem('currentUser');
             if (userStr) {
                 currentUser = JSON.parse(userStr);
+                console.log('✅ Found user in sessionStorage:', {
+                    name: currentUser.name,
+                    status: currentUser.status,
+                    isMerchant: currentUser.status === 'merchant'
+                });
+                
+                // If status is missing, refresh user data from database
+                if (!currentUser.status) {
+                    console.log('⚠️ Status field missing, refreshing user data...');
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                        const { data: customer, error } = await supabase
+                            .from('customers')
+                            .select('*')
+                            .eq('id', user.id)
+                            .single();
+                        
+                        if (!error && customer) {
+                            currentUser = customer;
+                            sessionStorage.setItem('currentUser', JSON.stringify(customer));
+                            console.log('✅ User data refreshed with status:', customer.status);
+                        }
+                    }
+                }
+                
                 await loadUserProfile(currentUser);
             } else {
                 const { data: { user } } = await supabase.auth.getUser();
@@ -797,32 +829,32 @@
             if (phoneInput && user.phone) phoneInput.value = user.phone;
             if (companyInput && user.address) companyInput.value = user.address;
 
-            // Display VIP status if applicable
-            displayVIPStatus(user);
+            // Display Merchant status if applicable
+            displayMerchantStatus(user);
 
             // Update addresses section with user data
             updateAddressesSection(user);
         }
 
-        // Display VIP status in profile
-        function displayVIPStatus(user) {
+        // Display Merchant status in profile
+        function displayMerchantStatus(user) {
             const profileCompany = document.querySelector('.profile-company');
-            if (user.status === 'vip' && profileCompany) {
-                profileCompany.innerHTML = `${profileCompany.textContent} <span style="color: var(--primary-600); font-weight: bold;">(VIP Customer)</span>`;
+            if (user.status === 'merchant' && profileCompany) {
+                profileCompany.innerHTML = `${profileCompany.textContent} <span style="color: var(--primary-600); font-weight: bold;">(Merchant Customer)</span>`;
             }
             
-            // Add VIP badge to profile name if VIP
-            if (user.status === 'vip') {
+            // Add Merchant badge to profile name if Merchant
+            if (user.status === 'merchant') {
                 const profileName = document.querySelector('.profile-name');
-                if (profileName && !profileName.querySelector('.vip-badge')) {
-                    profileName.innerHTML = `${profileName.textContent} <span class="vip-badge" style="background: linear-gradient(135deg, var(--primary-500), var(--secondary-500)); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">VIP</span>`;
+                if (profileName && !profileName.querySelector('.merchant-badge')) {
+                    profileName.innerHTML = `${profileName.textContent} <span class="merchant-badge" style="background: linear-gradient(135deg, var(--primary-500), var(--secondary-500)); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">Merchant</span>`;
                 }
             }
 
-            console.log('VIP Status Check:', {
+            console.log('Merchant Status Check:', {
                 name: user.name,
                 status: user.status,
-                isVIP: user.status === 'vip'
+                isMerchant: user.status === 'merchant'
             });
         }
 

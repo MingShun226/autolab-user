@@ -467,6 +467,7 @@
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s;
+            overflow: hidden;
         }
         .modal-overlay.show {
             opacity: 1;
@@ -477,8 +478,35 @@
             border-radius: 12px;
             padding: 25px;
             width: 90%;
-            max-width: 400px;
+            max-width: 450px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-product-info {
+            border-bottom: 1px solid var(--neutral-200);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .modal-product-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--neutral-800);
+            margin-bottom: 8px;
+        }
+
+        .modal-product-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--neutral-600);
+        }
+
+        .modal-product-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-500);
         }
         .modal-header {
             display: flex;
@@ -894,10 +922,13 @@
                             <div style="font-weight: 500;" id="userName">Customer Name</div>
                             <div style="font-size: 12px; color: #555;">Customer</div>
                         </div>
+                        <!-- Dropdown menu -->
                         <div class="dropdown-menu" id="userDropdown">
-                            <div class="dropdown-item order"><a href="#" style="text-decoration: none; color: inherit;">My Account</a></div>
+                            <div class="dropdown-item order"><a href="MyAccount.html"
+                                    style="text-decoration: none; color: inherit;">My Account</a></div>
                             <div class="dropdown-divider"></div>
-                            <div class="dropdown-item order"><a href="myorder.html" style="text-decoration: none; color: inherit;">My Orders</a></div>
+                            <div class="dropdown-item order"><a href="myorder.html"
+                                    style="text-decoration: none; color: inherit;">My Orders</a></div>
                             <div class="dropdown-divider"></div>
                             <div class="dropdown-item logout" id="logoutButton">Logout</div>
                         </div>
@@ -992,7 +1023,7 @@
         <div class="modal-overlay" id="quantityModal">
             <div class="quantity-modal">
                 <div class="modal-header">
-                    <div class="modal-title">Select Quantity</div>
+                    <div class="modal-title">Add to Cart</div>
                     <button class="close-modal" id="closeModal">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1001,11 +1032,27 @@
                         </svg>
                     </button>
                 </div>
-                <div class="quantity-controls">
-                    <button class="quantity-btn" id="decreaseQuantity">-</button>
-                    <input type="number" class="quantity-input" id="quantityInput" value="1" min="1">
-                    <button class="quantity-btn" id="increaseQuantity">+</button>
+                
+                <!-- Product Information -->
+                <div class="modal-product-info">
+                    <div class="modal-product-name" id="modalProductName">Product Name</div>
+                    <div class="modal-product-details">
+                        <span>SKU: <span id="modalProductSKU">N/A</span></span>
+                        <span>Stock: <span id="modalProductStock">N/A</span></span>
+                    </div>
+                    <div class="modal-product-price" id="modalProductPrice">RM 0.00</div>
                 </div>
+                
+                <!-- Quantity Selection -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 500; color: var(--neutral-700);">Quantity:</label>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" id="decreaseQuantity">-</button>
+                        <input type="number" class="quantity-input" id="quantityInput" value="1" min="1">
+                        <button class="quantity-btn" id="increaseQuantity">+</button>
+                    </div>
+                </div>
+                
                 <div class="modal-actions">
                     <button class="modal-btn cancel-btn" id="cancelBtn">Cancel</button>
                     <button class="modal-btn confirm-btn" id="addToCartBtn">Add to Cart</button>
@@ -1026,7 +1073,14 @@
     // Supabase config (same as catalog.html)
     const supabaseUrl = 'https://bbwimjvqpyxwhovihtfm.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid2ltanZxcHl4d2hvdmlodGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjAwMDksImV4cCI6MjA2MDk5NjAwOX0._D3wackPNKg-IbiswH7M-3wqeQRP6ujMmcJ9bb7_1z0';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+        auth: {
+            persistSession: true,
+            storage: window.localStorage,
+            autoRefreshToken: true,
+            detectSessionInUrl: false
+        }
+    });
 
     let currentProduct = null;
 
@@ -1050,21 +1104,21 @@
 
         // Get current user's status to determine pricing
         const userStr = sessionStorage.getItem('currentUser');
-        let isVIP = false;
+        let isMerchant = false;
         if (userStr) {
             const user = JSON.parse(userStr);
-            isVIP = user.status === 'vip';
+            isMerchant = user.status === 'merchant';
         }
 
-        // Use manufacturing price for VIP customers, retail price for others
-        const displayPrice = isVIP && data.manu_price ? data.manu_price : data.price;
+        // Use manufacturing price for Merchant customers, retail price for others
+        const displayPrice = isMerchant && data.manu_price ? data.manu_price : data.price;
         
         return {
             ...data,
             displayPrice: displayPrice || 0,
             originalPrice: data.price,
             manu_price: data.manu_price || 0,
-            isVIPPrice: isVIP && data.manu_price
+            isMerchantPrice: isMerchant && data.manu_price
         };
     }
 
@@ -1141,7 +1195,7 @@ function renderProductDetails(product) {
     
     const priceElement = document.querySelector('.product-price');
     const displayPrice = product.displayPrice || product.price || 0;
-    priceElement.innerHTML = `RM ${displayPrice.toFixed(2)}${product.isVIPPrice ? '<span style="color: var(--secondary-600); font-size: 16px; margin-left: 8px;">(B2B Price)</span>' : ''}`;
+    priceElement.innerHTML = `RM ${displayPrice.toFixed(2)}${product.isMerchantPrice ? '<span style="color: var(--secondary-600); font-size: 16px; margin-left: 8px;">(B2B Price)</span>' : ''}`;
     
     document.querySelector('.product-description').innerHTML = `<strong>Description:</strong><br>${product.description || 'No description available.'}`;
     
@@ -1290,11 +1344,56 @@ function renderProductDetails(product) {
 
     // Quantity modal logic
     function showQuantityModal() {
+        if (!currentProduct) return;
+
+        // Populate product information in modal
+        document.getElementById('modalProductName').textContent = currentProduct.name || 'Unknown Product';
+        document.getElementById('modalProductSKU').textContent = currentProduct.product_id || 'N/A';
+        
+        // Display stock status
+        const stockElement = document.getElementById('modalProductStock');
+        const quantity = currentProduct.quantity || 0;
+        if (quantity > 30) {
+            stockElement.textContent = 'In Stock';
+            stockElement.style.color = '#34A853';
+        } else if (quantity > 0) {
+            stockElement.textContent = 'Low Stock';
+            stockElement.style.color = '#FBBC05';
+        } else {
+            stockElement.textContent = 'Out of Stock';
+            stockElement.style.color = '#EA4335';
+        }
+        
+        // Display price (with merchant pricing if applicable)
+        const userStr = sessionStorage.getItem('currentUser');
+        let displayPrice = currentProduct.displayPrice || currentProduct.price || 0;
+        let priceText = '';
+        
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            if (user.status === 'merchant' && currentProduct.manu_price) {
+                displayPrice = currentProduct.manu_price;
+                priceText = `RM ${displayPrice.toFixed(2)} <span style="color: var(--secondary-600); font-size: 14px;">(B2B Price)</span>`;
+            } else {
+                priceText = `RM ${displayPrice.toFixed(2)}`;
+            }
+        } else {
+            priceText = `RM ${displayPrice.toFixed(2)}`;
+        }
+        
+        document.getElementById('modalProductPrice').innerHTML = priceText;
+
         document.getElementById('quantityInput').value = 1;
         document.getElementById('quantityModal').classList.add('show');
+        
+        // Lock body scroll when modal is open
+        document.body.style.overflow = 'hidden';
     }
     function closeQuantityModal() {
         document.getElementById('quantityModal').classList.remove('show');
+        
+        // Restore body scroll when modal is closed
+        document.body.style.overflow = '';
     }
 
     // User authentication (same as catalog.html)
@@ -1330,8 +1429,8 @@ function renderProductDetails(product) {
         // Update user status display
         const userStatusElement = document.querySelector('.user-info div:last-child div:last-child');
         if (userStatusElement) {
-            if (user.status === 'vip') {
-                userStatusElement.innerHTML = '<span style="color: var(--secondary-600); font-weight: 600;">VIP Customer</span>';
+            if (user.status === 'merchant') {
+                userStatusElement.innerHTML = '<span style="color: var(--secondary-600); font-weight: 600;">Merchant Customer</span>';
             } else {
                 userStatusElement.textContent = 'Customer';
             }
@@ -1357,25 +1456,25 @@ function renderProductDetails(product) {
 
         // Get current user's status
         const userStr = sessionStorage.getItem('currentUser');
-        let isVIP = false;
+        let isMerchant = false;
         if (userStr) {
             const user = JSON.parse(userStr);
-            isVIP = user.status === 'vip';
+            isMerchant = user.status === 'merchant';
         }
 
-        // Update product pricing based on VIP status
-        const displayPrice = isVIP && currentProduct.manu_price ? currentProduct.manu_price : currentProduct.originalPrice || currentProduct.price;
+        // Update product pricing based on Merchant status
+        const displayPrice = isMerchant && currentProduct.manu_price ? currentProduct.manu_price : currentProduct.originalPrice || currentProduct.price;
         currentProduct.displayPrice = displayPrice;
-        currentProduct.isVIPPrice = isVIP && currentProduct.manu_price;
+        currentProduct.isMerchantPrice = isMerchant && currentProduct.manu_price;
 
         // Update the price display
         const priceElement = document.querySelector('.product-price');
         if (priceElement) {
-            priceElement.innerHTML = `RM ${displayPrice.toFixed(2)}${currentProduct.isVIPPrice ? '<span style="color: var(--secondary-600); font-size: 16px; margin-left: 8px;">(B2B Price)</span>' : ''}`;
+            priceElement.innerHTML = `RM ${displayPrice.toFixed(2)}${currentProduct.isMerchantPrice ? '<span style="color: var(--secondary-600); font-size: 16px; margin-left: 8px;">(B2B Price)</span>' : ''}`;
         }
 
-        if (isVIP) {
-            console.log('✅ Product pricing updated for VIP customer - showing manufacturing price');
+        if (isMerchant) {
+            console.log('✅ Product pricing updated for Merchant customer - showing manufacturing price');
         } else {
             console.log('✅ Product pricing updated for regular customer - showing retail price');
         }

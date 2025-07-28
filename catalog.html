@@ -162,7 +162,7 @@
             align-items: center;
             gap: 15px;
             position: relative;
-            z-index: 9999 !important;
+            z-index: 100;
         }
 
         .cart-icon,
@@ -258,7 +258,7 @@
         }
 
         .dropdown-item.logout {
-            color: var(--accent-500);
+            color: var(--primary-500);
             cursor: pointer;
         }
 
@@ -1046,21 +1046,23 @@
             transform: translateY(-1px);
         }
 
-        /* Modal Styles */
+        /* FIXED MODAL STYLES - COMPLETELY RESPONSIVE AND CENTERED */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.7);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 50000; /* VERY HIGH Z-INDEX */
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .modal-overlay.show {
@@ -1070,51 +1072,144 @@
 
         .quantity-modal {
             background-color: white;
-            border-radius: 12px;
-            padding: 25px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            min-width: 350px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+            position: relative;
+            max-height: 85vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            border: 1px solid var(--neutral-200);
         }
 
+        .modal-overlay.show .quantity-modal {
+            transform: scale(1);
+        }
+
+        /* Modal Header */
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--neutral-100);
         }
 
         .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--neutral-700);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--neutral-800);
+            background: linear-gradient(135deg, var(--primary-600), var(--secondary-600));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .close-modal {
             background: none;
             border: none;
             cursor: pointer;
-            padding: 5px;
-            color: #777;
+            padding: 8px;
+            color: var(--neutral-500);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        .close-modal:hover {
+            background-color: var(--neutral-100);
+            color: var(--primary-500);
+            transform: scale(1.1);
+        }
+
+        /* Product Information Section */
+        .modal-product-info {
+            background: linear-gradient(145deg, var(--neutral-50), rgba(255, 255, 255, 0.95));
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid var(--neutral-200);
+        }
+
+        .modal-product-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--neutral-800);
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .modal-product-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: var(--neutral-600);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .modal-product-details span {
+            background: var(--neutral-100);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .modal-product-price {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-600), var(--secondary-600));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-top: 10px;
+        }
+
+        /* Quantity Controls */
         .quantity-controls {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 20px;
             margin: 30px 0;
+            padding: 20px;
+            background: var(--neutral-50);
+            border-radius: 12px;
+            border: 1px solid var(--neutral-200);
+        }
+
+        .quantity-controls label {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--neutral-700);
+            margin-bottom: 15px;
+            display: block;
+            text-align: center;
         }
 
         .quantity-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            border: 1px solid var(--neutral-200);
-            background-color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            border: 2px solid var(--neutral-300);
+            background: white;
             font-size: 20px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--neutral-600);
         }
 
         .quantity-btn:hover {
@@ -1124,16 +1219,43 @@
             transform: scale(1.05);
         }
 
-        .quantity-input {
-            width: 60px;
-            height: 40px;
-            border: 1px solid var(--neutral-200);
-            border-radius: 8px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: 600;
+        .quantity-btn:active {
+            transform: scale(0.95);
         }
 
+        .quantity-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .quantity-btn:disabled:hover {
+            background: white;
+            border-color: var(--neutral-300);
+            color: var(--neutral-600);
+            transform: none;
+        }
+
+        .quantity-input {
+            width: 80px;
+            height: 45px;
+            border: 2px solid var(--neutral-300);
+            border-radius: 12px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--neutral-800);
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .quantity-input:focus {
+            outline: none;
+            border-color: var(--primary-400);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+        }
+
+        /* Modal Actions */
         .modal-actions {
             display: flex;
             gap: 15px;
@@ -1142,36 +1264,44 @@
 
         .modal-btn {
             flex: 1;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 500;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
         }
 
         .cancel-btn {
             background: var(--neutral-100);
-            border: 2px solid var(--neutral-200);
-            color: var(--neutral-600);
-        }
-
-        .confirm-btn {
-            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-            border: none;
-            color: white;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            border: 2px solid var(--neutral-300);
+            color: var(--neutral-700);
         }
 
         .cancel-btn:hover {
             background: var(--neutral-200);
-            color: var(--neutral-700);
-            transform: translateY(-1px);
+            color: var(--neutral-800);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .confirm-btn {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
         }
 
         .confirm-btn:hover {
             background: linear-gradient(135deg, var(--primary-600), var(--secondary-500));
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .confirm-btn:active, .cancel-btn:active {
+            transform: translateY(0);
         }
 
         /* Add to Cart Confirmation */
@@ -1208,6 +1338,81 @@
         .confirm-product-name {
             font-weight: 500;
             color: var(--neutral-700);
+        }
+
+        /* Mobile Responsive for Modal */
+        @media (max-width: 768px) {
+            .modal-overlay {
+                padding: 15px;
+            }
+            
+            .quantity-modal {
+                min-width: 280px;
+                max-width: 95vw;
+                padding: 20px;
+                max-height: 90vh;
+            }
+            
+            .modal-title {
+                font-size: 18px;
+            }
+            
+            .modal-product-name {
+                font-size: 16px;
+            }
+            
+            .modal-product-price {
+                font-size: 20px;
+            }
+            
+            .modal-product-details {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .quantity-controls {
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .quantity-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+            
+            .quantity-input {
+                width: 70px;
+                height: 40px;
+                font-size: 16px;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .modal-btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quantity-modal {
+                min-width: 260px;
+                padding: 15px;
+            }
+            
+            .modal-product-info {
+                padding: 15px;
+            }
+            
+            .quantity-controls {
+                gap: 12px;
+                padding: 12px;
+            }
         }
 
         /* Small tablet adjustments */
@@ -1384,12 +1589,6 @@
                 height: 40px;
             }
 
-            .quantity-modal {
-                width: 95%;
-                max-width: none;
-                margin: 10px;
-            }
-
             .search-section {
                 flex-direction: column;
                 gap: 15px;
@@ -1529,8 +1728,6 @@
                 </div>
             </div>
         </div>
-
-        
 
         <!-- Search Section -->
         <div class="search-section">
@@ -1705,7 +1902,7 @@
         <div class="modal-overlay" id="quantityModal">
             <div class="quantity-modal">
                 <div class="modal-header">
-                    <div class="modal-title">Select Quantity</div>
+                    <div class="modal-title">Add to Cart</div>
                     <button class="close-modal" id="closeModal">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1714,11 +1911,27 @@
                         </svg>
                     </button>
                 </div>
-                <div class="quantity-controls">
-                    <button class="quantity-btn" id="decreaseQuantity">-</button>
-                    <input type="number" class="quantity-input" id="quantityInput" value="1" min="1">
-                    <button class="quantity-btn" id="increaseQuantity">+</button>
+                
+                <!-- Product Information -->
+                <div class="modal-product-info">
+                    <div class="modal-product-name" id="modalProductName">Product Name</div>
+                    <div class="modal-product-details">
+                        <span>SKU: <span id="modalProductSKU">N/A</span></span>
+                        <span>Stock: <span id="modalProductStock">N/A</span></span>
+                    </div>
+                    <div class="modal-product-price" id="modalProductPrice">RM 0.00</div>
                 </div>
+                
+                <!-- Quantity Selection -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 500; color: var(--neutral-700);">Quantity:</label>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" id="decreaseQuantity">-</button>
+                        <input type="number" class="quantity-input" id="quantityInput" value="1" min="1">
+                        <button class="quantity-btn" id="increaseQuantity">+</button>
+                    </div>
+                </div>
+                
                 <div class="modal-actions">
                     <button class="modal-btn cancel-btn" id="cancelBtn">Cancel</button>
                     <button class="modal-btn confirm-btn" id="addToCartBtn">Add to Cart</button>
@@ -1727,10 +1940,17 @@
         </div>
 
         <script>
-            // Supabase configuration
+            // Supabase configuration with persistent session
             const supabaseUrl = 'https://bbwimjvqpyxwhovihtfm.supabase.co';
             const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJid2ltanZxcHl4d2hvdmlodGZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MjAwMDksImV4cCI6MjA2MDk5NjAwOX0._D3wackPNKg-IbiswH7M-3wqeQRP6ujMmcJ9bb7_1z0';
-            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+                auth: {
+                    persistSession: true,
+                    storage: window.localStorage,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: false
+                }
+            });
 
             // Global variables
             let products = [];
@@ -1779,31 +1999,6 @@
             const applyFiltersBtn = document.getElementById('applyAdvancedFilters');
             const clearFiltersBtn = document.getElementById('clearAdvancedFilters');
 
-            // Debug function to test VIP status (remove in production)
-            window.testVIPStatus = function() {
-                const userStr = sessionStorage.getItem('currentUser');
-                if (!userStr) {
-                    console.log('❌ No user logged in');
-                    return;
-                }
-                
-                const user = JSON.parse(userStr);
-                console.log('👤 Current User:', {
-                    name: user.name,
-                    status: user.status,
-                    email: user.email,
-                    isVIP: user.status === 'vip'
-                });
-                
-                // Show VIP pricing info for first 3 products
-                if (products && products.length > 0) {
-                    console.log('💰 Sample Product Pricing:');
-                    products.slice(0, 3).forEach(product => {
-                        console.log(`- ${product.name}: Retail RM${product.originalPrice || 'N/A'}, Manu RM${product.manu_price || 'N/A'}, Displayed RM${product.price}`);
-                    });
-                }
-            };
-
             document.addEventListener('DOMContentLoaded', async function () {
                 // Check user authentication
                 await checkAuthentication();
@@ -1828,235 +2023,234 @@
                 setupEventListeners();
             });
 
-            // Check user authentication
+            // Check user authentication with fallback to sessionStorage
             async function checkAuthentication() {
-    try {
-        // Always get fresh data from Supabase auth
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            window.location.href = "customer-login.html";
-            return;
-        }
+                try {
+                    // First check sessionStorage for existing user data
+                    const userStr = sessionStorage.getItem('currentUser');
+                    if (userStr) {
+                        const storedUser = JSON.parse(userStr);
+                        console.log('✅ Found user in sessionStorage:', {
+                            name: storedUser.name,
+                            status: storedUser.status,
+                            isMerchant: storedUser.status === 'merchant'
+                        });
+                        
+                        // If status is missing, refresh user data from database
+                        if (!storedUser.status) {
+                            console.log('⚠️ Status field missing, refreshing user data...');
+                            await refreshUserData();
+                        }
+                        
+                        // Update UI with user data from sessionStorage
+                        updateUIForLoggedInUser(storedUser);
+                        return; // User found in sessionStorage, continue
+                    }
 
-        // Get phone number from Supabase auth user
-        let phoneNumber = null;
-        
-        // Method 1: If using phone auth, phone is in user.phone
-        if (user.phone) {
-            phoneNumber = user.phone;
-        }
-        // Method 2: If phone is stored in user metadata
-        else if (user.user_metadata && user.user_metadata.phone) {
-            phoneNumber = user.user_metadata.phone;
-        }
-        // Method 3: If phone is stored in app metadata
-        else if (user.app_metadata && user.app_metadata.phone) {
-            phoneNumber = user.app_metadata.phone;
-        }
+                    // If no sessionStorage, try Supabase auth
+                    console.log('🔍 No sessionStorage found, checking Supabase auth...');
+                    const { data: { user }, error: authError } = await supabase.auth.getUser();
+                    
+                    if (authError) {
+                        console.log('⚠️ Supabase auth error:', authError.message);
+                        // Don't immediately redirect on auth error, could be temporary
+                        return;
+                    }
+                    
+                    if (!user) {
+                        console.log('❌ No user found in Supabase auth, redirecting to login');
+                        window.location.href = "customer-login.html";
+                        return;
+                    }
 
-        console.log('🔍 Auth user phone number:', phoneNumber);
+                    console.log('✅ User found in Supabase auth, refreshing sessionStorage');
 
-        if (!phoneNumber) {
-            console.error('No phone number found in auth user');
-            window.location.href = "customer-login.html";
-            return;
-        }
+                    // Get phone number from Supabase auth user
+                    let phoneNumber = null;
+                    
+                    // Method 1: If using phone auth, phone is in user.phone
+                    if (user.phone) {
+                        phoneNumber = user.phone;
+                    }
+                    // Method 2: If phone is stored in user metadata
+                    else if (user.user_metadata && user.user_metadata.phone) {
+                        phoneNumber = user.user_metadata.phone;
+                    }
+                    // Method 3: If phone is stored in app metadata
+                    else if (user.app_metadata && user.app_metadata.phone) {
+                        phoneNumber = user.app_metadata.phone;
+                    }
 
-        // Query customer by phone number
-        const { data: customer, error } = await supabase
-            .from('customers')
-            .select('*')
-            .eq('phone', phoneNumber)
-            .single();
+                    console.log('🔍 Auth user phone number:', phoneNumber);
 
-        if (error || !customer) {
-            console.error('Customer not found by phone:', { phoneNumber, error });
-            // Try alternative phone formats
-            const alternativeCustomer = await tryAlternativePhoneFormats(phoneNumber);
-            if (!alternativeCustomer) {
-                window.location.href = "customer-login.html";
-                return;
+                    if (!phoneNumber) {
+                        console.error('No phone number found in auth user');
+                        window.location.href = "customer-login.html";
+                        return;
+                    }
+
+                    // Query customer by phone number
+                    const { data: customer, error: customerError } = await supabase
+                        .from('customers')
+                        .select('*')
+                        .eq('phone', phoneNumber)
+                        .single();
+
+                    if (customerError || !customer) {
+                        console.error('Customer not found by phone:', { phoneNumber, error: customerError });
+                        // Try alternative phone formats
+                        const alternativeCustomer = await tryAlternativePhoneFormats(phoneNumber);
+                        if (!alternativeCustomer) {
+                            window.location.href = "customer-login.html";
+                            return;
+                        }
+                        customer = alternativeCustomer;
+                    }
+
+                    // Always update sessionStorage with fresh data
+                    sessionStorage.setItem('currentUser', JSON.stringify(customer));
+                    console.log('✅ Fresh user data loaded by phone:', {
+                        name: customer.name,
+                        phone: customer.phone,
+                        status: customer.status,
+                        isMerchant: customer.status === 'merchant'
+                    });
+                    
+                    updateUIForLoggedInUser(customer);
+                } catch (error) {
+                    console.error('Authentication error:', error);
+                    window.location.href = "customer-login.html";
+                }
             }
-            customer = alternativeCustomer;
-        }
 
-        // Always update sessionStorage with fresh data
-        sessionStorage.setItem('currentUser', JSON.stringify(customer));
-        console.log('✅ Fresh user data loaded by phone:', {
-            name: customer.name,
-            phone: customer.phone,
-            status: customer.status,
-            isVIP: customer.status === 'vip'
-        });
-        
-        updateUIForLoggedInUser(customer);
-    } catch (error) {
-        console.error('Authentication error:', error);
-        window.location.href = "customer-login.html";
-    }
-}
+            async function tryAlternativePhoneFormats(originalPhone) {
+                console.log('🔄 Trying alternative phone formats for:', originalPhone);
+                
+                // Create different phone number formats to try
+                const phoneFormats = [];
+                
+                // Remove all non-digits
+                const digitsOnly = originalPhone.replace(/\D/g, '');
+                
+                // Common Malaysian phone formats
+                phoneFormats.push(digitsOnly); // 60123456789
+                phoneFormats.push(`+${digitsOnly}`); // +60123456789
+                phoneFormats.push(`0${digitsOnly.substring(2)}`); // 0123456789 (remove country code)
+                phoneFormats.push(originalPhone); // Original format
+                
+                // If it starts with +60, try without country code
+                if (digitsOnly.startsWith('60')) {
+                    phoneFormats.push(`0${digitsOnly.substring(2)}`);
+                }
+                
+                // If it starts with 0, try with country code
+                if (digitsOnly.startsWith('0')) {
+                    phoneFormats.push(`60${digitsOnly.substring(1)}`);
+                    phoneFormats.push(`+60${digitsOnly.substring(1)}`);
+                }
 
-async function tryAlternativePhoneFormats(originalPhone) {
-    console.log('🔄 Trying alternative phone formats for:', originalPhone);
-    
-    // Create different phone number formats to try
-    const phoneFormats = [];
-    
-    // Remove all non-digits
-    const digitsOnly = originalPhone.replace(/\D/g, '');
-    
-    // Common Malaysian phone formats
-    phoneFormats.push(digitsOnly); // 60123456789
-    phoneFormats.push(`+${digitsOnly}`); // +60123456789
-    phoneFormats.push(`0${digitsOnly.substring(2)}`); // 0123456789 (remove country code)
-    phoneFormats.push(originalPhone); // Original format
-    
-    // If it starts with +60, try without country code
-    if (digitsOnly.startsWith('60')) {
-        phoneFormats.push(`0${digitsOnly.substring(2)}`);
-    }
-    
-    // If it starts with 0, try with country code
-    if (digitsOnly.startsWith('0')) {
-        phoneFormats.push(`60${digitsOnly.substring(1)}`);
-        phoneFormats.push(`+60${digitsOnly.substring(1)}`);
-    }
+                console.log('📱 Phone formats to try:', phoneFormats);
 
-    console.log('📱 Phone formats to try:', phoneFormats);
+                // Try each format
+                for (const phoneFormat of phoneFormats) {
+                    try {
+                        const { data: customer, error: phoneFormatError } = await supabase
+                            .from('customers')
+                            .select('*')
+                            .eq('phone', phoneFormat)
+                            .single();
 
-    // Try each format
-    for (const phoneFormat of phoneFormats) {
-        try {
-            const { data: customer, error } = await supabase
-                .from('customers')
-                .select('*')
-                .eq('phone', phoneFormat)
-                .single();
+                        if (!phoneFormatError && customer) {
+                            console.log('✅ Found customer with phone format:', phoneFormat);
+                            return customer;
+                        }
+                    } catch (err) {
+                        // Continue to next format
+                        continue;
+                    }
+                }
 
-            if (!error && customer) {
-                console.log('✅ Found customer with phone format:', phoneFormat);
-                return customer;
-            }
-        } catch (err) {
-            // Continue to next format
-            continue;
-        }
-    }
-
-    console.error('❌ No customer found with any phone format');
-    return null;
-}
-
-// Updated debug function for phone-based authentication
-window.debugVIPStatusByPhone = async function() {
-    console.log('=== VIP STATUS DEBUG (PHONE-BASED) ===');
-    
-    // Check sessionStorage
-    const userStr = sessionStorage.getItem('currentUser');
-    console.log('📦 SessionStorage data:', userStr ? JSON.parse(userStr) : 'No data');
-    
-    // Check Supabase auth
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log('🔐 Supabase auth user:', user);
-    
-    if (user) {
-        // Extract phone number from different possible locations
-        let phoneNumber = user.phone || 
-                         (user.user_metadata && user.user_metadata.phone) || 
-                         (user.app_metadata && user.app_metadata.phone);
-        
-        console.log('📱 Extracted phone number:', phoneNumber);
-        
-        if (phoneNumber) {
-            // Try querying by phone
-            const { data: customerByPhone, error: errorByPhone } = await supabase
-                .from('customers')
-                .select('*')
-                .eq('phone', phoneNumber)
-                .single();
-            console.log('📞 Query by phone:', { phoneNumber, customerByPhone, errorByPhone });
-            
-            // If direct query fails, try alternative formats
-            if (errorByPhone || !customerByPhone) {
-                console.log('🔄 Trying alternative phone formats...');
-                const alternativeCustomer = await tryAlternativePhoneFormats(phoneNumber);
-                console.log('📱 Alternative format result:', alternativeCustomer);
-            }
-        }
-        
-        // Show sample customers with their phone numbers
-        const { data: sampleCustomers, error: sampleError } = await supabase
-            .from('customers')
-            .select('name, phone, status')
-            .limit(5);
-        console.log('👥 Sample customers with phones:', sampleCustomers);
-    }
-};
-
-// Updated refresh user data function
-async function refreshUserData() {
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            // Get phone number
-            let phoneNumber = user.phone || 
-                             (user.user_metadata && user.user_metadata.phone) || 
-                             (user.app_metadata && user.app_metadata.phone);
-
-            if (!phoneNumber) {
-                console.error('No phone number found in auth user');
+                console.error('❌ No customer found with any phone format');
                 return null;
             }
 
-            const { data: customer, error } = await supabase
-                .from('customers')
-                .select('*')
-                .eq('phone', phoneNumber)
-                .single();
+            // Updated refresh user data function
+            async function refreshUserData() {
+                try {
+                    // First try to get phone number from existing sessionStorage
+                    const userStr = sessionStorage.getItem('currentUser');
+                    let phoneNumber = null;
+                    
+                    if (userStr) {
+                        const existingUser = JSON.parse(userStr);
+                        phoneNumber = existingUser.phone;
+                        console.log('📱 Using phone from sessionStorage:', phoneNumber);
+                    }
+                    
+                    // If no phone in sessionStorage, try Supabase auth user
+                    if (!phoneNumber) {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (user) {
+                            phoneNumber = user.phone || 
+                                         (user.user_metadata && user.user_metadata.phone) || 
+                                         (user.app_metadata && user.app_metadata.phone);
+                            console.log('📱 Using phone from auth user:', phoneNumber);
+                        }
+                    }
 
-            if (!error && customer) {
-                sessionStorage.setItem('currentUser', JSON.stringify(customer));
-                console.log('✅ User data refreshed by phone:', customer);
-                return customer;
-            } else {
-                // Try alternative phone formats
-                const alternativeCustomer = await tryAlternativePhoneFormats(phoneNumber);
-                if (alternativeCustomer) {
-                    sessionStorage.setItem('currentUser', JSON.stringify(alternativeCustomer));
-                    console.log('✅ User data refreshed with alternative phone format:', alternativeCustomer);
-                    return alternativeCustomer;
+                    if (!phoneNumber) {
+                        console.error('No phone number found in sessionStorage or auth user');
+                        return null;
+                    }
+
+                    const { data: customer, error: refreshError } = await supabase
+                        .from('customers')
+                        .select('*')
+                        .eq('phone', phoneNumber)
+                        .single();
+
+                    if (!refreshError && customer) {
+                        sessionStorage.setItem('currentUser', JSON.stringify(customer));
+                        console.log('✅ User data refreshed by phone:', customer);
+                        return customer;
+                    } else {
+                        // Try alternative phone formats
+                        const alternativeCustomer = await tryAlternativePhoneFormats(phoneNumber);
+                        if (alternativeCustomer) {
+                            sessionStorage.setItem('currentUser', JSON.stringify(alternativeCustomer));
+                            console.log('✅ User data refreshed with alternative phone format:', alternativeCustomer);
+                            return alternativeCustomer;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error refreshing user data:', error);
                 }
+                return null;
             }
-        }
-    } catch (error) {
-        console.error('Error refreshing user data:', error);
-    }
-    return null;
-}
+
             // Fetch products from database - UPDATED FOR NEW SCHEMA
             async function fetchProducts() {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error: productsError } = await supabase
                         .from('products')
                         .select('*')
-                        .eq('is_active', true)
-                        .order('created_at', { ascending: false });
+                        .order('name');
 
-                    if (error) {
-                        console.error('Error fetching products:', error);
+                    if (productsError) {
+                        console.error('Error fetching products:', productsError);
                         return;
                     }
 
                     // Get current user's status to determine pricing
                     const userStr = sessionStorage.getItem('currentUser');
-                    let isVIP = false;
+                    let isMerchant = false;
                     if (userStr) {
                         const user = JSON.parse(userStr);
-                        isVIP = user.status === 'vip';
+                        isMerchant = user.status === 'merchant';
                         console.log('🔍 User Status Check:', {
                             userName: user.name,
                             userStatus: user.status,
-                            isVIP: isVIP
+                            isMerchant: isMerchant
                         });
                     } else {
                         console.log('⚠️ No user found in sessionStorage');
@@ -2064,8 +2258,8 @@ async function refreshUserData() {
 
                     // Map to format expected by UI - UPDATED FOR NEW SCHEMA
                     products = data.map(product => {
-                        // Use manufacturing price for VIP customers, retail price for others
-                        const displayPrice = isVIP && product.manu_price ? product.manu_price : product.price;
+                        // Use manufacturing price for Merchant customers, retail price for others
+                        const displayPrice = isMerchant && product.manu_price ? product.manu_price : product.price;
                         
                         // Debug pricing for first few products
                         if (data.indexOf(product) < 3) {
@@ -2073,8 +2267,8 @@ async function refreshUserData() {
                                 retailPrice: product.price,
                                 manuPrice: product.manu_price,
                                 displayPrice: displayPrice,
-                                isVIP: isVIP,
-                                willShowVIPPrice: isVIP && product.manu_price
+                                isMerchant: isMerchant,
+                                willShowMerchantPrice: isMerchant && product.manu_price
                             });
                         }
                         
@@ -2089,7 +2283,7 @@ async function refreshUserData() {
                             price: displayPrice || 0,
                             originalPrice: product.price,
                             manu_price: product.manu_price || 0,
-                            isVIPPrice: isVIP && product.manu_price,
+                            isMerchantPrice: isMerchant && product.manu_price,
                             screen_size: product.screen_size,
                             variant: product.variant,
                             year_range: product.year_range,
@@ -2107,8 +2301,8 @@ async function refreshUserData() {
 
                     currentProducts = [...products];
                     console.log(`✅ Fetched ${products.length} products successfully`);
-                    if (isVIP) {
-                        console.log('✅ VIP customer detected - showing manufacturing prices');
+                    if (isMerchant) {
+                        console.log('✅ Merchant customer detected - showing manufacturing prices');
                     }
                 } catch (error) {
                     console.error('Error:', error);
@@ -2317,7 +2511,7 @@ async function refreshUserData() {
                             <div class="product-features">${(product.features || '').substring(0, 80)}${product.features && product.features.length > 80 ? '...' : ''}</div>
                             <div class="product-price">
                                 RM ${product.price.toFixed(2)}
-                                ${product.isVIPPrice ? '<span style="color: var(--secondary-600); font-size: 12px; margin-left: 5px;">(B2B Price)</span>' : ''}
+                                ${product.isMerchantPrice ? '<span style="color: var(--secondary-600); font-size: 12px; margin-left: 5px;">(B2B Price)</span>' : ''}
                             </div>
                             <div class="product-actions">
                                 <button class="add-btn" ${product.stock === 0 ? 'disabled' : ''}>
@@ -2343,7 +2537,7 @@ async function refreshUserData() {
                         event.stopPropagation();
                         console.log('Add to Cart button clicked for', product);
                         if (product.stock > 0) {
-                            showQuantityModal(product.uuid); // FIX: use uuid, not id
+                            showQuantityModal(product.uuid);
                         }
                     });
 
@@ -2508,20 +2702,88 @@ async function refreshUserData() {
                 nextPageBtn.disabled = currentPage === totalPages;
             }
 
-            // Show quantity modal
+            // Show quantity modal - UPDATED for better display
             function showQuantityModal(productId) {
                 console.log('showQuantityModal called with', productId);
                 currentProduct = products.find(p => p.uuid === productId);
-                if (!currentProduct) return;
+                if (!currentProduct) {
+                    console.error('Product not found with UUID:', productId);
+                    return;
+                }
+                
+                console.log('Current product data:', currentProduct);
 
+                // Populate product information in modal
+                document.getElementById('modalProductName').textContent = currentProduct.name || 'Unknown Product';
+                document.getElementById('modalProductSKU').textContent = currentProduct.id || 'N/A';
+                
+                // Display stock status with better formatting
+                const stockElement = document.getElementById('modalProductStock');
+                const quantity = currentProduct.stock || 0;
+                if (quantity > 30) {
+                    stockElement.innerHTML = `<span style="color: var(--success-dark); font-weight: 600;">${quantity} In Stock</span>`;
+                } else if (quantity > 0) {
+                    stockElement.innerHTML = `<span style="color: var(--warning-dark); font-weight: 600;">${quantity} Low Stock</span>`;
+                } else {
+                    stockElement.innerHTML = `<span style="color: var(--error-dark); font-weight: 600;">Out of Stock</span>`;
+                }
+                
+                // Display price (with merchant pricing if applicable)
+                const userStr = sessionStorage.getItem('currentUser');
+                let displayPrice = currentProduct.price || 0;
+                let priceText = '';
+                
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    if (user.status === 'merchant' && currentProduct.manu_price) {
+                        displayPrice = currentProduct.manu_price;
+                        priceText = `RM ${displayPrice.toFixed(2)} <span style="color: var(--secondary-600); font-size: 16px; font-weight: 500;">(B2B Price)</span>`;
+                    } else {
+                        priceText = `RM ${displayPrice.toFixed(2)}`;
+                    }
+                } else {
+                    priceText = `RM ${displayPrice.toFixed(2)}`;
+                }
+                
+                document.getElementById('modalProductPrice').innerHTML = priceText;
+
+                // Reset quantity and show modal
                 quantityInput.value = 1;
+                quantityInput.max = Math.max(1, quantity); // Set max quantity based on stock
+                
+                // Update quantity buttons state
+                updateQuantityButtons();
+                
                 quantityModal.classList.add('show');
+                
+                // Lock body scroll when modal is open
+                document.body.style.overflow = 'hidden';
+            }
+
+            // Add this new function to update quantity button states
+            function updateQuantityButtons() {
+                const currentVal = parseInt(quantityInput.value);
+                const maxStock = currentProduct ? currentProduct.stock : 1;
+                
+                const decreaseBtn = document.getElementById('decreaseQuantity');
+                const increaseBtn = document.getElementById('increaseQuantity');
+                
+                // Disable decrease button if at minimum
+                decreaseBtn.disabled = currentVal <= 1;
+                decreaseBtn.style.opacity = currentVal <= 1 ? '0.5' : '1';
+                
+                // Disable increase button if at maximum stock
+                increaseBtn.disabled = currentVal >= maxStock;
+                increaseBtn.style.opacity = currentVal >= maxStock ? '0.5' : '1';
             }
 
             // Close quantity modal
             function closeQuantityModal() {
                 quantityModal.classList.remove('show');
                 currentProduct = null;
+                
+                // Restore body scroll when modal is closed
+                document.body.style.overflow = '';
             }
 
             // Add to cart - UPDATED FOR NEW SCHEMA
@@ -2630,13 +2892,13 @@ async function refreshUserData() {
                     if (!userStr) return;
 
                     const user = JSON.parse(userStr);
-                    const { data, error } = await supabase
+                    const { data, error: cartCountError } = await supabase
                         .from('cart')
                         .select('quantity')
                         .eq('customer_id', user.id);
 
-                    if (error) {
-                        console.error('Error loading cart count:', error);
+                    if (cartCountError) {
+                        console.error('Error loading cart count:', cartCountError);
                         return;
                     }
 
@@ -2654,11 +2916,11 @@ async function refreshUserData() {
                 document.getElementById('userAvatar').textContent = initials;
                 document.getElementById('userName').textContent = user.name || 'Customer';
 
-                // Update user status display
-                const userStatusElement = document.querySelector('.user-info div:last-child div:last-child');
+                // Update user status display - FIX: Use correct selector
+                const userStatusElement = document.querySelector('.user-info > div:nth-child(2) > div:last-child');
                 if (userStatusElement) {
-                    if (user.status === 'vip') {
-                        userStatusElement.innerHTML = '<span style="color: var(--secondary-600); font-weight: 600;">VIP Customer</span>';
+                    if (user.status === 'merchant') {
+                        userStatusElement.innerHTML = '<span style="color: var(--secondary-600); font-weight: 600;">Merchant Customer</span>';
                     } else {
                         userStatusElement.textContent = 'Customer';
                     }
@@ -2684,24 +2946,24 @@ async function refreshUserData() {
 
                 // Get current user's status
                 const userStr = sessionStorage.getItem('currentUser');
-                let isVIP = false;
+                let isMerchant = false;
                 if (userStr) {
                     const user = JSON.parse(userStr);
-                    isVIP = user.status === 'vip';
+                    isMerchant = user.status === 'merchant';
                     console.log('🔄 Refreshing pricing for user:', {
                         userName: user.name,
                         userStatus: user.status,
-                        isVIP: isVIP
+                        isMerchant: isMerchant
                     });
                 }
 
-                // Update product prices based on VIP status
+                // Update product prices based on Merchant status
                 products = products.map(product => {
-                    const displayPrice = isVIP && product.manu_price ? product.manu_price : product.originalPrice;
+                    const displayPrice = isMerchant && product.manu_price ? product.manu_price : product.originalPrice;
                     return {
                         ...product,
                         price: displayPrice,
-                        isVIPPrice: isVIP && product.manu_price
+                        isMerchantPrice: isMerchant && product.manu_price
                     };
                 });
 
@@ -2710,8 +2972,8 @@ async function refreshUserData() {
                 // Re-render products with updated pricing
                 filterProducts();
                 
-                if (isVIP) {
-                    console.log('✅ Pricing updated for VIP customer - showing manufacturing prices');
+                if (isMerchant) {
+                    console.log('✅ Pricing updated for Merchant customer - showing manufacturing prices');
                 } else {
                     console.log('✅ Pricing updated for regular customer - showing retail prices');
                 }
@@ -2721,6 +2983,37 @@ async function refreshUserData() {
             function toggleDropdown() {
                 const dropdown = document.getElementById('userDropdown');
                 dropdown.classList.toggle('active');
+            }
+
+            // Update the quantity control event listeners to use the new function
+            function setupQuantityControls() {
+                document.getElementById('decreaseQuantity').addEventListener('click', function () {
+                    const currentVal = parseInt(quantityInput.value);
+                    if (currentVal > 1) {
+                        quantityInput.value = currentVal - 1;
+                        updateQuantityButtons();
+                    }
+                });
+
+                document.getElementById('increaseQuantity').addEventListener('click', function () {
+                    const currentVal = parseInt(quantityInput.value);
+                    const maxStock = currentProduct ? currentProduct.stock : 1;
+                    if (currentVal < maxStock) {
+                        quantityInput.value = currentVal + 1;
+                        updateQuantityButtons();
+                    }
+                });
+                
+                // Add input event listener to validate manual input
+                quantityInput.addEventListener('input', function() {
+                    const val = parseInt(this.value);
+                    const maxStock = currentProduct ? currentProduct.stock : 1;
+                    
+                    if (val < 1) this.value = 1;
+                    if (val > maxStock) this.value = maxStock;
+                    
+                    updateQuantityButtons();
+                });
             }
 
             // Setup event listeners
@@ -2868,18 +3161,8 @@ async function refreshUserData() {
                 document.getElementById('cancelBtn').addEventListener('click', closeQuantityModal);
                 document.getElementById('addToCartBtn').addEventListener('click', addToCart);
 
-                // Quantity controls
-                document.getElementById('decreaseQuantity').addEventListener('click', function () {
-                    const currentVal = parseInt(quantityInput.value);
-                    if (currentVal > 1) {
-                        quantityInput.value = currentVal - 1;
-                    }
-                });
-
-                document.getElementById('increaseQuantity').addEventListener('click', function () {
-                    const currentVal = parseInt(quantityInput.value);
-                    quantityInput.value = currentVal + 1;
-                });
+                // Setup quantity controls
+                setupQuantityControls();
             }
 
             // Handle logout
@@ -2895,5 +3178,4 @@ async function refreshUserData() {
             }
         </script>
 </body>
-
 </html>

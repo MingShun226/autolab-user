@@ -914,6 +914,39 @@
                             </ol>
                         </div>
                     </div>
+
+                    <!-- Merchant Debt Payment (Only for Merchant customers) -->
+                    <div class="payment-method" data-method="debt" id="merchant-debt-payment" style="display: none;">
+                        <div class="method-header">
+                            <div class="method-icon" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);">💎</div>
+                            <div class="method-details">
+                                <h3>Merchant Debt Payment <span style="color: #f59e0b; font-size: 12px; font-weight: 600; background: #fef3c7; padding: 2px 8px; border-radius: 12px; margin-left: 8px;">MERCHANT ONLY</span></h3>
+                                <p>Pay later - No immediate payment required</p>
+                            </div>
+                        </div>
+                        <div class="payment-instructions">
+                            <div class="instructions-title">
+                                💎 Merchant Debt Payment Instructions
+                            </div>
+                            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 16px 0; color: #92400e;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                                    <div style="font-size: 20px;">⭐</div>
+                                    <div style="font-weight: 700; font-size: 15px;">Merchant Privilege - Pay Later Option</div>
+                                </div>
+                                <div style="font-size: 13px; line-height: 1.5;">
+                                    As a valued Merchant customer, you can choose to receive your order now and pay later. This amount will be added to your account balance for future settlement.
+                                </div>
+                            </div>
+                            <ol class="payment-steps">
+                                <li>Select this payment method</li>
+                                <li>Confirm your order below</li>
+                                <li>Order will be processed immediately</li>
+                                <li>Amount will be added to your account balance</li>
+                                <li>Settle payment at your convenience</li>
+                                <li>Access payment history in your Merchant account</li>
+                            </ol>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="action-buttons">
@@ -1000,6 +1033,42 @@
                     throw new Error('Order not found');
                 }
 
+                // Get customer details to check Merchant status using phone number
+                console.log('DEBUG: Loading customer for phone:', order.customer_phone);
+                let { data: customer, error: customerError } = await supabase
+                    .from('customers')
+                    .select('status, name, phone')
+                    .eq('phone', order.customer_phone)
+                    .single();
+
+                console.log('DEBUG: Customer query by phone result:', { customer, customerError });
+
+                if (customerError || !customer) {
+                    console.warn('Could not load customer details by phone:', customerError);
+                    console.log('DEBUG: Trying to fallback to customer_id if available...');
+                    
+                    // Fallback to customer_id if phone lookup fails
+                    if (order.customer_id) {
+                        const { data: customerById, error: customerIdError } = await supabase
+                            .from('customers')
+                            .select('status, name, phone')
+                            .eq('customer_id', order.customer_id)
+                            .single();
+                        
+                        console.log('DEBUG: Customer query by ID result:', { customerById, customerIdError });
+                        
+                        if (!customerIdError && customerById) {
+                            customer = customerById;
+                        } else {
+                            // Set default customer object to prevent undefined issues
+                            customer = { status: 'regular' };
+                        }
+                    } else {
+                        // Set default customer object to prevent undefined issues
+                        customer = { status: 'regular' };
+                    }
+                }
+
                 // Get order items
                 const { data: orderItems, error: itemsError } = await supabase
                     .from('order_products')
@@ -1010,8 +1079,12 @@
                     throw new Error('Error loading order items');
                 }
 
-                orderData = { ...order, items: orderItems };
+                orderData = { ...order, items: orderItems, customer: customer };
+                console.log('DEBUG: Final orderData assembled:', orderData);
+                console.log('DEBUG: Customer object in orderData:', orderData.customer);
+                
                 displayOrderData();
+                checkMerchantStatus();
                 showLoading(false);
 
             } catch (error) {
@@ -1068,6 +1141,33 @@
             document.getElementById('payment-info').style.display = 'block';
         }
 
+        // Check Merchant status and show debt payment option
+        function checkMerchantStatus() {
+            if (!orderData || !orderData.customer) {
+                console.log('DEBUG: No order data or customer data available');
+                console.log('orderData:', orderData);
+                return;
+            }
+            
+            console.log('DEBUG: Customer status:', orderData.customer.status);
+            console.log('DEBUG: Full customer data:', orderData.customer);
+            
+            const isMerchant = orderData.customer.status === 'merchant';
+            const merchantDebtPayment = document.getElementById('merchant-debt-payment');
+            
+            console.log('DEBUG: isMerchant:', isMerchant);
+            console.log('DEBUG: merchantDebtPayment element found:', !!merchantDebtPayment);
+            
+            if (isMerchant && merchantDebtPayment) {
+                merchantDebtPayment.style.display = 'block';
+                console.log('✅ Merchant customer detected - debt payment option enabled');
+            } else if (!isMerchant) {
+                console.log('❌ Customer is not Merchant - debt payment option hidden');
+            } else if (!merchantDebtPayment) {
+                console.log('❌ Merchant debt payment element not found in DOM');
+            }
+        }
+
         // Setup payment method selection
         function setupPaymentMethodSelection() {
             const paymentMethods = document.querySelectorAll('.payment-method');
@@ -1108,32 +1208,12 @@
                 paymentBtn.disabled = true;
                 paymentBtn.innerHTML = '⏳ Processing...';
 
-                // Update order status to payment_submitted
-                const { error: updateError } = await supabase
-                    .from('orders')
-                    .update({
-                        status: 'payment_submitted',
-                        payment_method: selectedPaymentMethod,
-                        payment_verified_at: new Date().toISOString()
-                    })
-                    .eq('id', orderData.id);
-
-                if (updateError) {
-                    throw updateError;
+                // Handle debt payment differently for Merchant customers
+                if (selectedPaymentMethod === 'debt') {
+                    await handleDebtPayment();
+                } else {
+                    await handleRegularPayment();
                 }
-
-                // Show success message
-                showAlert('Payment submitted successfully! Our admin will verify your payment within 2-4 hours. You will receive a WhatsApp confirmation once verified.', 'success');
-                
-                // Update UI
-                document.querySelector('.status-badge').innerHTML = `
-                    <span class="status-dot" style="background: #10b981;"></span>
-                    <span style="color: #065f46;">Payment Submitted</span>
-                `;
-                document.querySelector('.status-badge').style.background = '#d1fae5';
-
-                paymentBtn.innerHTML = '✅ Payment Submitted';
-                paymentBtn.style.background = '#10b981';
 
                 // Send notification to admin (via n8n webhook)
                 sendPaymentNotification();
@@ -1146,21 +1226,127 @@
             }
         }
 
+        // Handle regular payment submission
+        async function handleRegularPayment() {
+            const paymentBtn = document.getElementById('payment-complete-btn');
+            
+            // Update order status to payment_submitted
+            const { error: updateError } = await supabase
+                .from('orders')
+                .update({
+                    status: 'payment_submitted',
+                    payment_method: selectedPaymentMethod,
+                    payment_verified_at: new Date().toISOString()
+                })
+                .eq('id', orderData.id);
+
+            if (updateError) {
+                throw updateError;
+            }
+
+            // Show success message
+            showAlert('Payment submitted successfully! Our admin will verify your payment within 2-4 hours. You will receive a WhatsApp confirmation once verified.', 'success');
+            
+            // Update UI
+            document.querySelector('.status-badge').innerHTML = `
+                <span class="status-dot" style="background: #10b981;"></span>
+                <span style="color: #065f46;">Payment Submitted</span>
+            `;
+            document.querySelector('.status-badge').style.background = '#d1fae5';
+
+            paymentBtn.innerHTML = '✅ Payment Submitted';
+            paymentBtn.style.background = '#10b981';
+        }
+
+        // Handle Merchant debt payment
+        async function handleDebtPayment() {
+            const paymentBtn = document.getElementById('payment-complete-btn');
+            
+            console.log('💎 Processing Merchant debt payment...');
+            
+            // Calculate total amount for debt record
+            let totalAmount = 0;
+            orderData.items.forEach(item => {
+                totalAmount += item.products.price * item.quantity;
+            });
+            
+            console.log('💰 Total debt amount:', totalAmount);
+
+            // Update order status to payment_submitted (admin verification still required)
+            console.log('📝 Updating order status to payment_submitted...');
+            const { error: updateError } = await supabase
+                .from('orders')
+                .update({
+                    status: 'payment_submitted',
+                    payment_method: 'debt',
+                    payment_verified_at: new Date().toISOString()
+                })
+                .eq('id', orderData.id);
+
+            if (updateError) {
+                console.error('❌ Error updating order status:', updateError);
+                throw updateError;
+            }
+            
+            console.log('✅ Order status updated successfully');
+
+            // Create debt record for Merchant customer
+            const { error: debtError } = await supabase
+                .from('customer_debts')
+                .insert({
+                    customer_id: orderData.customer_id,
+                    order_id: orderData.id,
+                    amount: totalAmount,
+                    description: `Order ${orderData.order_id} - Merchant Debt Payment`,
+                    created_at: new Date().toISOString(),
+                    status: 'unpaid'
+                });
+
+            if (debtError) {
+                console.warn('Could not create debt record:', debtError);
+            }
+
+            // Show success message for debt payment
+            showAlert('Order submitted! As a Merchant customer, this amount has been added to your account balance. Your order is pending admin verification and will be processed once approved.', 'success');
+            
+            // Update UI for debt payment
+            document.querySelector('.status-badge').innerHTML = `
+                <span class="status-dot" style="background: #f59e0b;"></span>
+                <span style="color: #92400e;">Merchant Debt Payment - Pending Verification</span>
+            `;
+            document.querySelector('.status-badge').style.background = '#fef3c7';
+
+            paymentBtn.innerHTML = '💎 Merchant Order Submitted';
+            paymentBtn.style.background = '#f59e0b';
+        }
+
         // Send payment notification
         async function sendPaymentNotification() {
             try {
                 const webhookUrl = 'https://apipietech.app.n8n.cloud/webhook/unified-whatsapp';
                 
+                // Calculate total amount
+                let totalAmount = 0;
+                orderData.items.forEach(item => {
+                    totalAmount += item.products.price * item.quantity;
+                });
+
+                const isDebtPayment = selectedPaymentMethod === 'debt';
+                const status = 'payment_submitted'; // Both debt and regular payments now use same status
+                const notificationType = isDebtPayment ? 'MERCHANT_DEBT_PAYMENT_SUBMITTED' : 'PAYMENT_SUBMITTED';
+
                 const payload = {
                     messages: [{
                         text: {
-                            body: `PAYMENT_SUBMITTED:${JSON.stringify({
+                            body: `${notificationType}:${JSON.stringify({
                                 orderId: orderData.order_id,
-                                amount: orderData.amount,
+                                amount: totalAmount,
                                 paymentMethod: selectedPaymentMethod,
                                 customerPhone: orderData.customer_phone,
                                 submittedAt: new Date().toISOString(),
-                                status: 'payment_submitted'
+                                status: status,
+                                isVipDebt: isDebtPayment,
+                                customerStatus: orderData.customer?.status || 'regular'
                             })}`
                         }
                     }]
