@@ -1052,7 +1052,7 @@
                         const { data: customerById, error: customerIdError } = await supabase
                             .from('customers')
                             .select('id, status, name, phone')
-                            .eq('customer_id', order.customer_id)
+                            .eq('id', order.customer_id)
                             .single();
                         
                         console.log('DEBUG: Customer query by ID result:', { customerById, customerIdError });
@@ -1201,6 +1201,10 @@
 
         // Confirm payment
         async function confirmPayment() {
+            console.log('🔥 Payment confirmation started');
+            console.log('🔥 Selected payment method:', selectedPaymentMethod);
+            console.log('🔥 Order data available:', !!orderData);
+            
             if (!selectedPaymentMethod || !orderData) {
                 showAlert('Please select a payment method', 'error');
                 return;
@@ -1215,8 +1219,10 @@
 
                 // Handle debt payment differently for Merchant customers
                 if (selectedPaymentMethod === 'debt') {
+                    console.log('🔥 Processing debt payment...');
                     await handleDebtPayment();
                 } else {
+                    console.log('🔥 Processing regular payment...');
                     await handleRegularPayment();
                 }
 
@@ -1264,6 +1270,31 @@
         }
 
         // Handle Merchant debt payment
+        /* 
+        IMPORTANT: This function requires the 'customer_debts' table to exist in Supabase.
+        If the table doesn't exist, create it with this SQL:
+        
+        CREATE TABLE customer_debts (
+            id SERIAL PRIMARY KEY,
+            customer_id INTEGER REFERENCES customers(id),
+            order_id INTEGER REFERENCES orders(id),
+            order_reference TEXT,
+            amount DECIMAL(10,2) NOT NULL,
+            description TEXT,
+            status TEXT DEFAULT 'unpaid' CHECK (status IN ('unpaid', 'paid', 'overdue')),
+            payment_method TEXT,
+            payment_reference TEXT,
+            settlement_notes TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            settled_at TIMESTAMP WITH TIME ZONE
+        );
+        
+        -- Enable Row Level Security
+        ALTER TABLE customer_debts ENABLE ROW LEVEL SECURITY;
+        
+        -- Create policies (adjust as needed for your security requirements)
+        CREATE POLICY "Allow all operations" ON customer_debts FOR ALL USING (true);
+        */
         async function handleDebtPayment() {
             const paymentBtn = document.getElementById('payment-complete-btn');
             
@@ -1301,26 +1332,63 @@
             // Create debt record for Merchant customer  
             const customerId = orderData.customer?.id || orderData.customer_id;
             console.log('💎 Creating debt record for customer ID:', customerId);
+            console.log('💎 Customer object:', orderData.customer);
+            console.log('💎 Order customer_id field:', orderData.customer_id);
             
             if (!customerId) {
-                console.warn('⚠️ No customer ID found, debt record may not link correctly');
+                console.error('⚠️ No customer ID found, cannot create debt record');
+                throw new Error('Customer ID not found. Cannot create debt record.');
             }
             
-            const { error: debtError } = await supabase
+            const debtRecord = {
+                customer_id: customerId,
+                order_id: orderData.order_id,
+                amount: totalAmount,
+                description: `Order ${orderData.order_id} - Merchant Debt Payment`,
+                created_at: new Date().toISOString(),
+                status: 'unpaid'
+            };
+            
+            console.log('💎 Attempting to insert debt record:', debtRecord);
+            
+            const { data: debtData, error: debtError } = await supabase
                 .from('customer_debts')
-                .insert({
-                    customer_id: customerId,
-                    order_id: orderData.id,
-                    order_reference: orderData.order_id,
-                    amount: totalAmount,
-                    description: `Order ${orderData.order_id} - Merchant Debt Payment`,
-                    created_at: new Date().toISOString(),
-                    status: 'unpaid'
-                });
+                .insert(debtRecord)
+                .select();
 
             if (debtError) {
-                console.warn('Could not create debt record:', debtError);
+                console.error('❌ Error creating debt record:', debtError);
+                console.error('❌ Error details:', JSON.stringify(debtError, null, 2));
+                
+                // Check if it's a table not found error
+                if (debtError.message && (debtError.message.includes('relation "customer_debts" does not exist') || 
+                                         debtError.message.includes('table "customer_debts" does not exist'))) {
+                    console.warn('⚠️ customer_debts table does not exist, using fallback approach');
+                    
+                    // Fallback: Store debt information in the order record itself
+                    const { error: fallbackError } = await supabase
+                        .from('orders')
+                        .update({
+                            debt_amount: totalAmount,
+                            debt_description: `Merchant Debt Payment - Amount: RM ${totalAmount.toFixed(2)}`,
+                            debt_status: 'unpaid',
+                            debt_created_at: new Date().toISOString()
+                        })
+                        .eq('id', orderData.id);
+                    
+                    if (fallbackError) {
+                        throw new Error('Failed to store debt information: ' + fallbackError.message);
+                    }
+                    
+                    console.log('✅ Debt information stored in order record as fallback');
+                    showAlert('Order submitted! Debt information has been recorded. Note: For full debt management features, please ask your administrator to create the customer_debts table.', 'success');
+                    return; // Exit early since we used fallback
+                } else {
+                    throw new Error('Failed to create debt record: ' + debtError.message);
+                }
             }
+            
+            console.log('✅ Debt record created successfully:', debtData);
 
             // Show success message for debt payment
             showAlert('Order submitted! As a Merchant customer, this amount has been added to your account balance. Your order is pending admin verification and will be processed once approved.', 'success');
