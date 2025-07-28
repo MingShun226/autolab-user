@@ -1037,7 +1037,7 @@
                 console.log('DEBUG: Loading customer for phone:', order.customer_phone);
                 let { data: customer, error: customerError } = await supabase
                     .from('customers')
-                    .select('status, name, phone')
+                    .select('id, status, name, phone')
                     .eq('phone', order.customer_phone)
                     .single();
 
@@ -1051,7 +1051,7 @@
                     if (order.customer_id) {
                         const { data: customerById, error: customerIdError } = await supabase
                             .from('customers')
-                            .select('status, name, phone')
+                            .select('id, status, name, phone')
                             .eq('customer_id', order.customer_id)
                             .single();
                         
@@ -1061,18 +1061,18 @@
                             customer = customerById;
                         } else {
                             // Set default customer object to prevent undefined issues
-                            customer = { status: 'regular' };
+                            customer = { id: null, status: 'regular' };
                         }
                     } else {
                         // Set default customer object to prevent undefined issues
-                        customer = { status: 'regular' };
+                        customer = { id: null, status: 'regular' };
                     }
                 }
 
-                // Get order items
+                // Get order items with merchant pricing
                 const { data: orderItems, error: itemsError } = await supabase
                     .from('order_products')
-                    .select('*, products(name, price, product_id)')
+                    .select('*, products(name, price, manu_price, product_id)')
                     .eq('order_id', order.id);
 
                 if (itemsError) {
@@ -1110,10 +1110,14 @@
             let orderDetailsHtml = '';
             let totalAmount = 0;
 
-            // Add order items
+            // Add order items with correct pricing (merchant vs regular)
             orderData.items.forEach(item => {
                 const product = item.products;
-                const itemTotal = product.price * item.quantity;
+                const isMerchant = orderData.customer?.status === 'merchant';
+                
+                // Use merchant price if customer is merchant and manu_price exists, otherwise use regular price
+                const itemPrice = isMerchant && product.manu_price ? product.manu_price : product.price;
+                const itemTotal = itemPrice * item.quantity;
                 totalAmount += itemTotal;
 
                 orderDetailsHtml += `
@@ -1121,6 +1125,7 @@
                         <div class="item-details">
                             <h4>${product.name}</h4>
                             <div class="item-meta">SKU: ${product.product_id} • Qty: ${item.quantity}</div>
+                            ${isMerchant && product.manu_price ? '<div class="item-meta" style="color: var(--primary); font-weight: 600;">B2B Price</div>' : ''}
                         </div>
                         <div class="item-price">RM ${itemTotal.toFixed(2)}</div>
                     </div>
@@ -1264,20 +1269,23 @@
             
             console.log('💎 Processing Merchant debt payment...');
             
-            // Calculate total amount for debt record
+            // Calculate total amount for debt record with correct pricing
             let totalAmount = 0;
             orderData.items.forEach(item => {
-                totalAmount += item.products.price * item.quantity;
+                const product = item.products;
+                const isMerchant = orderData.customer?.status === 'merchant';
+                const itemPrice = isMerchant && product.manu_price ? product.manu_price : product.price;
+                totalAmount += itemPrice * item.quantity;
             });
             
             console.log('💰 Total debt amount:', totalAmount);
 
-            // Update order status to payment_submitted (admin verification still required)
-            console.log('📝 Updating order status to payment_submitted...');
+            // Update order status to pending_confirmation for debt payments
+            console.log('📝 Updating order status to pending_confirmation...');
             const { error: updateError } = await supabase
                 .from('orders')
                 .update({
-                    status: 'payment_submitted',
+                    status: 'pending_confirmation',
                     payment_method: 'debt',
                     payment_verified_at: new Date().toISOString()
                 })
@@ -1290,12 +1298,20 @@
             
             console.log('✅ Order status updated successfully');
 
-            // Create debt record for Merchant customer
+            // Create debt record for Merchant customer  
+            const customerId = orderData.customer?.id || orderData.customer_id;
+            console.log('💎 Creating debt record for customer ID:', customerId);
+            
+            if (!customerId) {
+                console.warn('⚠️ No customer ID found, debt record may not link correctly');
+            }
+            
             const { error: debtError } = await supabase
                 .from('customer_debts')
                 .insert({
-                    customer_id: orderData.customer_id,
+                    customer_id: customerId,
                     order_id: orderData.id,
+                    order_reference: orderData.order_id,
                     amount: totalAmount,
                     description: `Order ${orderData.order_id} - Merchant Debt Payment`,
                     created_at: new Date().toISOString(),
@@ -1325,14 +1341,17 @@
             try {
                 const webhookUrl = 'https://apipietech.app.n8n.cloud/webhook/unified-whatsapp';
                 
-                // Calculate total amount
+                // Calculate total amount with correct pricing
                 let totalAmount = 0;
                 orderData.items.forEach(item => {
-                    totalAmount += item.products.price * item.quantity;
+                    const product = item.products;
+                    const isMerchant = orderData.customer?.status === 'merchant';
+                    const itemPrice = isMerchant && product.manu_price ? product.manu_price : product.price;
+                    totalAmount += itemPrice * item.quantity;
                 });
 
                 const isDebtPayment = selectedPaymentMethod === 'debt';
-                const status = 'payment_submitted'; // Both debt and regular payments now use same status
+                const status = isDebtPayment ? 'pending_confirmation' : 'payment_submitted';
                 const notificationType = isDebtPayment ? 'MERCHANT_DEBT_PAYMENT_SUBMITTED' : 'PAYMENT_SUBMITTED';
 
                 const payload = {
