@@ -1171,13 +1171,11 @@
                 // Calculate order-based financial metrics
                 const totalPurchases = orders.reduce((sum, order) => sum + (order.amount || 0), 0);
                 const orderCount = orders.length;
-                const averageOrder = orderCount > 0 ? totalPurchases / orderCount : 0;
                 
                 // Update UI with calculated values
                 document.getElementById('totalPurchases').textContent = `RM ${totalPurchases.toFixed(2)}`;
                 document.getElementById('outstandingAmount').textContent = `RM ${totalOutstanding.toFixed(2)}`;
                 document.getElementById('orderCount').textContent = orderCount.toString();
-                document.getElementById('averageOrder').textContent = `RM ${averageOrder.toFixed(2)}`;
                 
                 // Load payment history
                 await loadPaymentHistory(orders, processedDebts, paymentHistory);
@@ -1236,7 +1234,6 @@
             
             document.getElementById('purchasePeriod').textContent = periodText;
             document.getElementById('orderPeriod').textContent = periodText;
-            document.getElementById('averagePeriod').textContent = periodText;
         }
         
         // Load payment history
@@ -1288,7 +1285,8 @@
                             id: order.order_id,
                             date: orderDate,
                             amount: order.amount,
-                            status: paymentStatus,
+                            status: order.status, // Use order status instead of payment status
+                            paymentStatus: paymentStatus, // Keep payment status for reference
                             method: paymentMethod,
                             type: 'order'
                         });
@@ -1309,28 +1307,45 @@
                     });
                     
                     let statusClass = 'paid';
-                    let statusText = 'Paid';
+                    let statusText = 'Processing';
                     
+                    // Map order status to appropriate styling and text
                     switch(record.status) {
-                        case 'paid':
-                            statusClass = 'paid';
-                            statusText = 'Paid';
-                            break;
-                        case 'partial':
+                        case 'pending_payment':
                             statusClass = 'pending';
-                            statusText = 'Partial';
+                            statusText = 'Pending Payment';
                             break;
-                        case 'unpaid':
-                            statusClass = 'unpaid';
-                            statusText = 'Unpaid';
+                        case 'pending_confirmation':
+                            statusClass = 'pending';
+                            statusText = 'Pending Confirmation';
                             break;
-                        case 'overdue':
+                        case 'processing':
+                            statusClass = 'pending';
+                            statusText = 'Processing';
+                            break;
+                        case 'prepared':
+                            statusClass = 'pending';
+                            statusText = 'Prepared';
+                            break;
+                        case 'delivering':
+                            statusClass = 'pending';
+                            statusText = 'Delivering';
+                            break;
+                        case 'delivered':
+                            statusClass = 'paid';
+                            statusText = 'Delivered';
+                            break;
+                        case 'cancelled':
                             statusClass = 'unpaid';
-                            statusText = 'Overdue';
+                            statusText = 'Cancelled';
+                            break;
+                        case 'awaiting_confirmation':
+                            statusClass = 'pending';
+                            statusText = 'Awaiting Confirmation';
                             break;
                         default:
-                            statusClass = 'paid';
-                            statusText = 'Paid';
+                            statusClass = 'pending';
+                            statusText = record.status ? record.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Processing';
                     }
                     
                     const row = document.createElement('tr');
@@ -1554,16 +1569,6 @@
                         <div class="financial-card-subtitle" id="orderPeriod">Current Month</div>
                     </div>
                     
-                    <div class="financial-card">
-                        <div class="financial-card-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 2v20m8-10H4"></path>
-                            </svg>
-                        </div>
-                        <div class="financial-card-title">Average Order</div>
-                        <div class="financial-card-amount" id="averageOrder">RM 0.00</div>
-                        <div class="financial-card-subtitle" id="averagePeriod">Current Month</div>
-                    </div>
                 </div>
                 
                 <!-- Payment History -->
