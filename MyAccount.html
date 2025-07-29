@@ -732,8 +732,21 @@
             // Initialize user dropdown
             initializeUserDropdown();
             
-            // Load financial data
-            await loadFinancialData();
+            // Load financial data with loading indicators
+            try {
+                // Show loading state
+                document.getElementById('totalPurchases').textContent = 'Loading...';
+                document.getElementById('outstandingAmount').textContent = 'Loading...';
+                document.getElementById('orderCount').textContent = 'Loading...';
+                
+                await loadFinancialData();
+            } catch (error) {
+                console.error('Error initializing financial data:', error);
+                // Set error state
+                document.getElementById('totalPurchases').textContent = 'Error';
+                document.getElementById('outstandingAmount').textContent = 'Error';
+                document.getElementById('orderCount').textContent = 'Error';
+            }
             
             // Initialize financial summary functionality
             initializeFinancialSummary();
@@ -815,18 +828,13 @@
             }
 
             // Update personal information form fields
-            const nameInput = document.querySelector('input[value="David"]');
-            const lastNameInput = document.querySelector('input[value="Chen"]');
-            const emailInput = document.querySelector('input[value="david.chen@protonsc.com.my"]');
-            const phoneInput = document.querySelector('input[value="+60 3-7956 1234"]');
-            const companyInput = document.querySelector('input[value="Proton Service Center KL"]');
+            const nameInput = document.getElementById('fullName');
+            const emailInput = document.getElementById('email');
+            const phoneInput = document.getElementById('phone');
+            const companyInput = document.getElementById('company');
 
             if (nameInput && user.name) {
-                const nameParts = user.name.split(' ');
-                nameInput.value = nameParts[0] || '';
-                if (lastNameInput && nameParts.length > 1) {
-                    lastNameInput.value = nameParts.slice(1).join(' ');
-                }
+                nameInput.value = user.name;
             }
             
             if (emailInput && user.email) emailInput.value = user.email;
@@ -839,24 +847,29 @@
 
         // Update addresses section with user data
         function updateAddressesSection(user) {
-            const addressContent = document.querySelector('.address-content');
-            if (addressContent && user.address) {
-                // Split address into lines if it contains line breaks or commas
-                const addressLines = user.address.includes('\n') 
-                    ? user.address.split('\n') 
-                    : user.address.split(',').map(line => line.trim());
-                
-                let formattedAddress = addressLines.join('<br>');
-                if (user.phone) {
-                    formattedAddress += `<br>${user.phone}`;
+            const addressContent = document.getElementById('addressContent');
+            const addressTextarea = document.getElementById('addressTextarea');
+            
+            if (user.address) {
+                // Update the display content
+                if (addressContent) {
+                    // Split address into lines if it contains line breaks or commas
+                    const addressLines = user.address.includes('\n') 
+                        ? user.address.split('\n') 
+                        : user.address.split(',').map(line => line.trim());
+                    
+                    let formattedAddress = addressLines.join('<br>');
+                    if (user.phone) {
+                        formattedAddress += `<br>${user.phone}`;
+                    }
+                    
+                    addressContent.innerHTML = formattedAddress;
                 }
                 
-                addressContent.innerHTML = formattedAddress;
-            }
-
-            const addressName = document.querySelector('.address-name');
-            if (addressName && user.name) {
-                addressName.textContent = user.name;
+                // Update the textarea for editing
+                if (addressTextarea) {
+                    addressTextarea.value = user.address;
+                }
             }
         }
 
@@ -865,12 +878,23 @@
             try {
                 if (!currentUser) return;
 
+                // Try to load cart items - handle the case where table might not exist
                 const { data: cartItems, error } = await supabase
                     .from('cart_items')
                     .select('quantity')
                     .eq('customer_id', currentUser.id);
 
-                if (!error && cartItems) {
+                if (error) {
+                    console.log('Cart items table not accessible:', error.message);
+                    // Set cart count to 0 if table doesn't exist
+                    const cartCountElement = document.querySelector('.cart-count');
+                    if (cartCountElement) {
+                        cartCountElement.textContent = '0';
+                    }
+                    return;
+                }
+
+                if (cartItems) {
                     const totalItems = cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
                     const cartCountElement = document.querySelector('.cart-count');
                     if (cartCountElement) {
@@ -957,9 +981,13 @@
                         
                         // Update UI
                         const userAvatar = document.getElementById('userAvatar');
+                        const userName = document.getElementById('userName');
                         if (userAvatar && updatedData.name) {
                             const initials = updatedData.name.split(' ').map(n => n[0]).join('').toUpperCase();
                             userAvatar.textContent = initials;
+                        }
+                        if (userName && updatedData.name) {
+                            userName.textContent = updatedData.name;
                         }
                         
                         // Disable inputs and hide actions
@@ -1060,158 +1088,264 @@
         }
         
         // Load financial data from database
-        async function loadFinancialData() {
-            try {
-                if (!currentUser) return;
-                
-                const selectedPeriod = document.getElementById('monthSelect').value;
-                const dateRange = getDateRange(selectedPeriod);
-                
-                // Update period labels
-                updatePeriodLabels(selectedPeriod);
-                
-                // Load orders data for total purchases calculation
-                const { data: orders, error } = await supabase
-                    .from('orders')
-                    .select('*')
-                    .eq('customer_id', currentUser.id)
-                    .gte('order_date', dateRange.start)
-                    .lte('order_date', dateRange.end)
-                    .neq('status', 'awaiting_confirmation');
-                
-                if (error) {
-                    console.error('Error loading orders data:', error);
-                    return;
-                }
-                
-                // Load debt records exactly like debt-management does
-                const { data: debts, error: debtError } = await supabase
-                    .from('customer_debts')
-                    .select(`
-                        *,
-                        customers(name, phone, email)
-                    `)
-                    .eq('customer_id', currentUser.id)
-                    .order('created_at', { ascending: false });
-                
-                if (debtError) {
-                    console.error('Error loading debt data:', debtError);
-                    return;
-                }
-                
-                // Load payment history for all debts exactly like debt-management
-                const { data: payments, error: paymentError } = await supabase
-                    .from('debt_payments')
-                    .select('*')
-                    .in('debt_id', debts ? debts.map(debt => debt.id) : [])
-                    .order('payment_date', { ascending: false });
-                
-                let paymentHistory = {};
-                if (!paymentError && payments) {
-                    // Group payments by debt_id exactly like debt-management
-                    payments.forEach(payment => {
-                        if (!paymentHistory[payment.debt_id]) {
-                            paymentHistory[payment.debt_id] = [];
-                        }
-                        paymentHistory[payment.debt_id].push(payment);
-                    });
-                }
-                
-                // Calculate outstanding amounts exactly like debt-management does
-                let totalOutstanding = 0;
-                let processedDebts = [];
-                
-                if (debts && debts.length > 0) {
-                    processedDebts = debts.map(debt => {
-                        const debtPayments = paymentHistory[debt.id] || [];
-                        const totalPaid = debtPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-                        const outstanding = parseFloat(debt.amount) - totalPaid;
-                        
-                        // Only count positive outstanding amounts
-                        if (outstanding > 0) {
-                            totalOutstanding += outstanding;
-                        }
-                        
-                        // Update status based on outstanding amount (same logic as debt-management)
-                        let status = debt.status;
-                        if (outstanding <= 0) {
-                            status = 'paid';
-                        } else if (totalPaid > 0 && outstanding > 0) {
-                            status = 'partial';
-                        } else {
-                            const thirtyDaysAgo = new Date();
-                            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                            if (new Date(debt.created_at) < thirtyDaysAgo) {
-                                status = 'overdue';
-                            } else {
-                                status = 'unpaid';
-                            }
-                        }
-                        
-                        return {
-                            ...debt,
-                            outstanding: Math.max(0, outstanding),
-                            totalPaid,
-                            calculatedStatus: status
-                        };
-                    });
-                    
-                    // Filter debts by selected date range for display
-                    const filteredDebts = processedDebts.filter(debt => {
-                        const debtDate = new Date(debt.created_at);
-                        return debtDate >= new Date(dateRange.start) && debtDate <= new Date(dateRange.end);
-                    });
-                    
-                    // Recalculate outstanding for filtered period
-                    totalOutstanding = filteredDebts.reduce((sum, debt) => {
-                        return sum + (debt.outstanding || 0);
-                    }, 0);
-                }
-                
-                // Calculate order-based financial metrics
-                const totalPurchases = orders.reduce((sum, order) => sum + (order.amount || 0), 0);
-                const orderCount = orders.length;
-                
-                // Update UI with calculated values
-                document.getElementById('totalPurchases').textContent = `RM ${totalPurchases.toFixed(2)}`;
-                document.getElementById('outstandingAmount').textContent = `RM ${totalOutstanding.toFixed(2)}`;
-                document.getElementById('orderCount').textContent = orderCount.toString();
-                
-                // Load payment history
-                await loadPaymentHistory(orders, processedDebts, paymentHistory);
-                
-            } catch (error) {
-                console.error('Error loading financial data:', error);
+async function loadFinancialData() {
+    try {
+        if (!currentUser) return;
+        
+        const selectedPeriod = document.getElementById('monthSelect').value;
+        const dateRange = getDateRange(selectedPeriod);
+        
+        // Update period labels
+        updatePeriodLabels(selectedPeriod);
+        
+        // Load ALL orders for accurate calculation (excluding only awaiting_confirmation)
+        const { data: allOrders, error: allOrdersError } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('customer_id', currentUser.id)
+            .neq('status', 'awaiting_confirmation');
+        
+        // Load orders within date range for display
+        const { data: orders, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('customer_id', currentUser.id)
+            .gte('order_date', dateRange.start)
+            .lte('order_date', dateRange.end)
+            .neq('status', 'awaiting_confirmation');
+        
+        if (error || allOrdersError) {
+            console.error('Error loading orders data:', error || allOrdersError);
+            // Set default values if there's an error
+            document.getElementById('totalPurchases').textContent = 'Error loading';
+            document.getElementById('orderCount').textContent = 'Error';
+            document.getElementById('outstandingAmount').textContent = 'Error loading';
+            
+            // Show error message in payment history
+            const paymentHistoryBody = document.getElementById('paymentHistoryBody');
+            if (paymentHistoryBody) {
+                paymentHistoryBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="no-data-message">Error loading payment history. Please refresh and try again.</td>
+                    </tr>
+                `;
             }
+            return;
         }
+        
+        // Ensure we have valid data
+        const validOrders = orders || [];
+        const validAllOrders = allOrders || [];
+        
+        // Log the actual data for debugging
+        console.log('Orders debugging:', {
+            totalOrders: validAllOrders.length,
+            filteredOrders: validOrders.length,
+            dateRange: dateRange,
+            allOrderDates: validAllOrders.map(order => ({
+                id: order.order_id || order.id,
+                date: order.order_date,
+                amount: order.amount,
+                status: order.status
+            })),
+            filteredOrderDates: validOrders.map(order => ({
+                id: order.order_id || order.id,
+                date: order.order_date,
+                amount: order.amount,
+                status: order.status
+            }))
+        });
+        
+        if (validOrders.length === 0 && validAllOrders.length === 0) {
+            console.log('No orders found for customer:', currentUser.id);
+        }
+        
+        // Load debt records exactly like debt-management does
+        const { data: debts, error: debtError } = await supabase
+            .from('customer_debts')
+            .select(`
+                *,
+                customers(name, phone, email)
+            `)
+            .eq('customer_id', currentUser.id)
+            .order('created_at', { ascending: false });
+        
+        if (debtError) {
+            console.error('Error loading debt data:', debtError);
+            // Continue execution with empty debts if there's an error
+        }
+        
+        const validDebts = debts || [];
+        
+        // Load payment history for all debts exactly like debt-management
+        const { data: payments, error: paymentError } = await supabase
+            .from('debt_payments')
+            .select('*')
+            .in('debt_id', validDebts.length > 0 ? validDebts.map(debt => debt.id) : [])
+            .order('payment_date', { ascending: false });
+        
+        let paymentHistory = {};
+        if (!paymentError && payments) {
+            // Group payments by debt_id exactly like debt-management
+            payments.forEach(payment => {
+                if (!paymentHistory[payment.debt_id]) {
+                    paymentHistory[payment.debt_id] = [];
+                }
+                paymentHistory[payment.debt_id].push(payment);
+            });
+        }
+        
+        // Calculate total outstanding from ALL debts (not filtered by date)
+        let totalOutstandingAllTime = 0;
+        let processedDebts = [];
+        
+        if (validDebts && validDebts.length > 0) {
+            processedDebts = validDebts.map(debt => {
+                const debtPayments = paymentHistory[debt.id] || [];
+                const totalPaid = debtPayments.reduce((sum, payment) => {
+                    const paymentAmount = parseFloat(payment.amount) || 0;
+                    return sum + paymentAmount;
+                }, 0);
+                
+                const debtAmount = parseFloat(debt.amount) || 0;
+                const outstanding = debtAmount - totalPaid;
+                
+                // Only count positive outstanding amounts
+                if (outstanding > 0) {
+                    totalOutstandingAllTime += outstanding;
+                }
+                
+                // Update status based on outstanding amount (same logic as debt-management)
+                let status = debt.status;
+                if (outstanding <= 0) {
+                    status = 'paid';
+                } else if (totalPaid > 0 && outstanding > 0) {
+                    status = 'partial';
+                } else {
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    if (new Date(debt.created_at) < thirtyDaysAgo) {
+                        status = 'overdue';
+                    } else {
+                        status = 'unpaid';
+                    }
+                }
+                
+                return {
+                    ...debt,
+                    outstanding: Math.max(0, outstanding),
+                    totalPaid,
+                    calculatedStatus: status
+                };
+            });
+        }
+        
+        // Calculate order-based financial metrics for the selected period
+        const totalPurchases = validOrders.reduce((sum, order) => {
+            // Use the same field as admin panel: order.amount
+            const amount = order.amount || 0;
+            const parsedAmount = parseFloat(amount) || 0;
+            console.log(`Order ${order.order_id || order.id}: amount=${amount}, parsedAmount=${parsedAmount}`);
+            return sum + parsedAmount;
+        }, 0);
+        const orderCount = validOrders.length;
+        
+        // If no orders in period but there are all orders and period is "current", 
+        // let's also show "all time" data for comparison
+        if (validOrders.length === 0 && validAllOrders.length > 0 && selectedPeriod === 'current') {
+            console.log('No orders in current period, but found orders overall. Consider changing period to "all" to see data.');
+        }
+        
+        // Debug logging
+        console.log('Financial Data Summary:', {
+            customerId: currentUser.id,
+            allOrders: validAllOrders.length,
+            ordersInPeriod: validOrders.length,
+            totalPurchases: totalPurchases,
+            totalDebts: validDebts.length,
+            totalOutstandingAllTime: totalOutstandingAllTime,
+            processedDebts: processedDebts.length,
+            payments: payments ? payments.length : 0,
+            selectedPeriod: selectedPeriod,
+            dateRange: dateRange,
+            sampleOrders: validOrders.slice(0, 3).map(order => ({
+                id: order.order_id || order.id,
+                amount: order.amount,
+                date: order.order_date,
+                status: order.status
+            }))
+        });
+        
+        // Update UI with calculated values (with proper error handling)
+        try {
+            const totalPurchasesElement = document.getElementById('totalPurchases');
+            const outstandingAmountElement = document.getElementById('outstandingAmount');
+            const orderCountElement = document.getElementById('orderCount');
+            
+            if (totalPurchasesElement) {
+                totalPurchasesElement.textContent = `RM ${totalPurchases.toFixed(2)}`;
+            }
+            
+            if (outstandingAmountElement) {
+                outstandingAmountElement.textContent = `RM ${totalOutstandingAllTime.toFixed(2)}`;
+            }
+            
+            if (orderCountElement) {
+                orderCountElement.textContent = orderCount.toString();
+            }
+        } catch (uiError) {
+            console.error('Error updating UI elements:', uiError);
+        }
+        
+        // Load payment history
+        await loadPaymentHistory(validOrders, processedDebts, paymentHistory);
+        
+    } catch (error) {
+        console.error('Error loading financial data:', error);
+    }
+}
         
         // Get date range based on selected period
         function getDateRange(period) {
             const now = new Date();
-            const start = new Date();
+            let start = new Date();
+            let end = new Date();
             
             switch (period) {
                 case 'current':
-                    start.setDate(1); // First day of current month
+                    start = new Date(now.getFullYear(), now.getMonth(), 1); // First day of current month
+                    end = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of current month
                     break;
                 case 'last':
-                    start.setMonth(now.getMonth() - 1, 1); // First day of last month
-                    now.setMonth(now.getMonth(), 0); // Last day of last month
+                    start = new Date(now.getFullYear(), now.getMonth() - 1, 1); // First day of last month
+                    end = new Date(now.getFullYear(), now.getMonth(), 0); // Last day of last month
                     break;
                 case 'last3':
-                    start.setMonth(now.getMonth() - 3, 1); // First day 3 months ago
+                    start = new Date(now.getFullYear(), now.getMonth() - 3, 1); // First day 3 months ago
+                    end = new Date(); // Today
                     break;
                 case 'all':
-                    start.setFullYear(2020, 0, 1); // Start from 2020
+                    start = new Date(2020, 0, 1); // Start from 2020
+                    end = new Date(); // Today
                     break;
                 default:
-                    start.setDate(1);
+                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             }
             
-            return {
+            const dateRange = {
                 start: start.toISOString().split('T')[0],
-                end: now.toISOString().split('T')[0]
+                end: end.toISOString().split('T')[0]
             };
+            
+            console.log('Date range calculation:', {
+                period: period,
+                startDate: dateRange.start,
+                endDate: dateRange.end,
+                currentDate: now.toISOString().split('T')[0]
+            });
+            
+            return dateRange;
         }
         
         // Update period labels based on selection
@@ -1241,7 +1375,16 @@
             try {
                 const paymentHistoryBody = document.getElementById('paymentHistoryBody');
                 
-                if ((!orders || orders.length === 0) && (!processedDebts || processedDebts.length === 0)) {
+                if (!paymentHistoryBody) {
+                    console.error('Payment history table body not found');
+                    return;
+                }
+                
+                // Ensure we have valid arrays
+                const validOrders = orders || [];
+                const validProcessedDebts = processedDebts || [];
+                
+                if (validOrders.length === 0 && validProcessedDebts.length === 0) {
                     paymentHistoryBody.innerHTML = `
                         <tr>
                             <td colspan="5" class="no-data-message">No payment history found for the selected period.</td>
@@ -1256,14 +1399,17 @@
                 const paymentRecords = [];
                 
                 // Add orders with their accurate payment status from debt calculations
-                if (orders && orders.length > 0) {
-                    orders.forEach(order => {
+                if (validOrders && validOrders.length > 0) {
+                    validOrders.forEach(order => {
                         const orderDate = new Date(order.order_date);
                         
-                        // Find corresponding debt record
-                        const debtRecord = processedDebts ? processedDebts.find(debt => 
-                            debt.order_id === order.id || debt.order_reference === order.order_id
-                        ) : null;
+                        // Find corresponding debt record - check both order_id and order_reference
+const debtRecord = validProcessedDebts ? validProcessedDebts.find(debt => 
+    debt.order_id === order.id || 
+    debt.order_reference === order.order_id ||
+    debt.order_reference === order.id ||
+    debt.order_id === order.order_id
+) : null;
                         
                         let paymentStatus = 'paid'; // Default assume paid if no debt record
                         let paymentMethod = order.payment_method || 'Not specified';
@@ -1281,10 +1427,16 @@
                             }
                         }
                         
+                        // Use the same amount field as admin panel: order.amount
+                        const orderAmount = order.amount || 0;
+                        
+                        // Get the display order ID - use order_id formatted field if available, otherwise use the UUID
+                        const displayOrderId = order.order_id || `ORD-${new Date(order.order_date).getFullYear()}-${Math.floor(Math.random() * 10000)}`;
+                        
                         paymentRecords.push({
-                            id: order.order_id,
+                            id: displayOrderId,
                             date: orderDate,
-                            amount: order.amount,
+                            amount: orderAmount,
                             status: order.status, // Use order status instead of payment status
                             paymentStatus: paymentStatus, // Keep payment status for reference
                             method: paymentMethod,
@@ -1555,7 +1707,7 @@
                         </div>
                         <div class="financial-card-title">Outstanding Amount</div>
                         <div class="financial-card-amount" id="outstandingAmount">RM 0.00</div>
-                        <div class="financial-card-subtitle">Unpaid Orders</div>
+                        <div class="financial-card-subtitle">Total Unpaid (All Time)</div>
                     </div>
                     
                     <div class="financial-card">
