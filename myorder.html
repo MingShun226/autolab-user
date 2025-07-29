@@ -1148,7 +1148,7 @@
 
         document.addEventListener('DOMContentLoaded', async function () {
             // Check user authentication
-            const userStr = sessionStorage.getItem('currentUser');
+            const userStr = localStorage.getItem('currentUser');
             if (userStr) {
                 const user = JSON.parse(userStr);
                 updateUIForLoggedInUser(user);
@@ -1169,7 +1169,7 @@
 
                     if (!error && customer) {
                         // Store in session storage
-                        sessionStorage.setItem('currentUser', JSON.stringify(customer));
+                        localStorage.setItem('currentUser', JSON.stringify(customer));
                         updateUIForLoggedInUser(customer);
 
                         // Load user's orders
@@ -1227,7 +1227,7 @@
         async function loadCartCount() {
             try {
                 // Get current user
-                const userStr = sessionStorage.getItem('currentUser');
+                const userStr = localStorage.getItem('currentUser');
                 if (!userStr) return;
 
                 const user = JSON.parse(userStr);
@@ -2021,7 +2021,7 @@
                     alert('Error signing out. Please try again.');
                 } else {
                     // Clear session storage
-                    sessionStorage.removeItem('currentUser');
+                    localStorage.removeItem('currentUser');
 
                     // Redirect to login page
                     window.location.href = "customer-login.html";

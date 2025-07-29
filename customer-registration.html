@@ -468,7 +468,7 @@
                         const linkingNotified = await notifyN8nRegistration(customerData);
                         
                         // Store customer info in session storage
-                        sessionStorage.setItem('currentUser', JSON.stringify({
+                        localStorage.setItem('currentUser', JSON.stringify({
                             id: user.id,
                             phone: cleanPhone,
                             email: email,

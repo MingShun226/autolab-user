@@ -1103,7 +1103,7 @@
         }
 
         // Get current user's status to determine pricing
-        const userStr = sessionStorage.getItem('currentUser');
+        const userStr = localStorage.getItem('currentUser');
         let isMerchant = false;
         if (userStr) {
             const user = JSON.parse(userStr);
@@ -1250,7 +1250,7 @@ function renderProductDetails(product) {
             return;
         }
         try {
-            const userStr = sessionStorage.getItem('currentUser');
+            const userStr = localStorage.getItem('currentUser');
             if (!userStr) {
                 alert('Please log in to add items to cart');
                 return;
@@ -1329,7 +1329,7 @@ function renderProductDetails(product) {
     // Load cart count
     async function loadCartCount() {
         try {
-            const userStr = sessionStorage.getItem('currentUser');
+            const userStr = localStorage.getItem('currentUser');
             if (!userStr) return;
             const user = JSON.parse(userStr);
             const { data, error } = await supabase
@@ -1365,7 +1365,7 @@ function renderProductDetails(product) {
         }
         
         // Display price (with merchant pricing if applicable)
-        const userStr = sessionStorage.getItem('currentUser');
+        const userStr = localStorage.getItem('currentUser');
         let displayPrice = currentProduct.displayPrice || currentProduct.price || 0;
         let priceText = '';
         
@@ -1398,7 +1398,7 @@ function renderProductDetails(product) {
 
     // User authentication (same as catalog.html)
     async function checkAuthentication() {
-        const userStr = sessionStorage.getItem('currentUser');
+        const userStr = localStorage.getItem('currentUser');
         if (userStr) {
             const user = JSON.parse(userStr);
             updateUIForLoggedInUser(user);
@@ -1411,7 +1411,7 @@ function renderProductDetails(product) {
                     .eq('id', user.id)
                     .single();
                 if (!error && customer) {
-                    sessionStorage.setItem('currentUser', JSON.stringify(customer));
+                    localStorage.setItem('currentUser', JSON.stringify(customer));
                     updateUIForLoggedInUser(customer);
                 } else {
                     window.location.href = "customer-login.html";
@@ -1455,7 +1455,7 @@ function renderProductDetails(product) {
         if (!currentProduct) return;
 
         // Get current user's status
-        const userStr = sessionStorage.getItem('currentUser');
+        const userStr = localStorage.getItem('currentUser');
         let isMerchant = false;
         if (userStr) {
             const user = JSON.parse(userStr);
@@ -1488,7 +1488,7 @@ function renderProductDetails(product) {
         if (error) {
             alert('Error signing out. Please try again.');
         } else {
-            sessionStorage.removeItem('currentUser');
+            localStorage.removeItem('currentUser');
             window.location.href = "customer-login.html";
         }
     }

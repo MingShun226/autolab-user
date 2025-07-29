@@ -1078,7 +1078,7 @@ async function testN8nConnection() {
     `;
             document.head.appendChild(animationStyle);
             // Check user authentication
-            const userStr = sessionStorage.getItem('currentUser');
+            const userStr = localStorage.getItem('currentUser');
             if (userStr) {
                 console.log("User found in session storage");
                 const user = JSON.parse(userStr);
@@ -1103,7 +1103,7 @@ async function testN8nConnection() {
                     if (!error && customer) {
                         console.log("Customer details retrieved:", customer);
                         // Store in session storage
-                        sessionStorage.setItem('currentUser', JSON.stringify(customer));
+                        localStorage.setItem('currentUser', JSON.stringify(customer));
                         updateUIForLoggedInUser(customer);
 
                         // Load cart data
@@ -1172,7 +1172,7 @@ async function testN8nConnection() {
                 });
 
                 // Get current user's Merchant status for pricing
-                const userStr = sessionStorage.getItem('currentUser');
+                const userStr = localStorage.getItem('currentUser');
                 let isMerchant = false;
                 if (userStr) {
                     const user = JSON.parse(userStr);
@@ -1527,7 +1527,7 @@ async function testN8nConnection() {
             if (!cartItems || cartItems.length === 0) return;
 
             // Get current user's status
-            const userStr = sessionStorage.getItem('currentUser');
+            const userStr = localStorage.getItem('currentUser');
             let isMerchant = false;
             if (userStr) {
                 const user = JSON.parse(userStr);
@@ -1585,7 +1585,7 @@ async function proceedToCheckout() {
         console.log('🛒 Starting checkout process...');
         
         // Get current user
-        const userStr = sessionStorage.getItem('currentUser');
+        const userStr = localStorage.getItem('currentUser');
         if (!userStr) {
             alert('Please log in to proceed with checkout');
             return;
@@ -2344,7 +2344,7 @@ async function proceedToCheckout() {
                                 // Update session storage
                                 user.address = primaryAddressValue;
                                 user.alternative_address = altAddressValue;
-                                sessionStorage.setItem('currentUser', JSON.stringify(user));
+                                localStorage.setItem('currentUser', JSON.stringify(user));
                             }
                         }
                     }
@@ -2402,7 +2402,7 @@ async function proceedToCheckout() {
                 alert('Error signing out. Please try again.');
             } else {
                 // Clear session storage
-                sessionStorage.removeItem('currentUser');
+                localStorage.removeItem('currentUser');
 
                 // Redirect to login page
                 window.location.href = "customer-login.html";

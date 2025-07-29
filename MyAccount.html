@@ -741,7 +741,7 @@
 
         // Check user authentication and load profile
         async function checkAuthentication() {
-            const userStr = sessionStorage.getItem('currentUser');
+            const userStr = localStorage.getItem('currentUser');
             if (userStr) {
                 currentUser = JSON.parse(userStr);
                 console.log('✅ Found user in sessionStorage:', {
@@ -763,7 +763,7 @@
                         
                         if (!error && customer) {
                             currentUser = customer;
-                            sessionStorage.setItem('currentUser', JSON.stringify(customer));
+                            localStorage.setItem('currentUser', JSON.stringify(customer));
                             console.log('✅ User data refreshed with status:', customer.status);
                         }
                     }
@@ -781,7 +781,7 @@
 
                     if (!error && customer) {
                         currentUser = customer;
-                        sessionStorage.setItem('currentUser', JSON.stringify(customer));
+                        localStorage.setItem('currentUser', JSON.stringify(customer));
                         await loadUserProfile(customer);
                     } else {
                         window.location.href = "customer-login.html";
@@ -953,7 +953,7 @@
                         
                         // Update current user object
                         Object.assign(currentUser, updatedData);
-                        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
                         
                         // Update UI
                         const userAvatar = document.getElementById('userAvatar');
@@ -1034,7 +1034,7 @@
                         
                         // Update current user object
                         currentUser.address = newAddress;
-                        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
                         
                         // Update display
                         const addressContent = document.getElementById('addressContent');
@@ -1426,7 +1426,7 @@
                 logoutButton.addEventListener('click', async function() {
                     try {
                         await supabase.auth.signOut();
-                        sessionStorage.removeItem('currentUser');
+                        localStorage.removeItem('currentUser');
                         window.location.href = 'customer-login.html';
                     } catch (error) {
                         console.error('Error logging out:', error);

@@ -344,7 +344,7 @@
                     .single();
 
                 if (customerData) {
-                    sessionStorage.setItem('currentUser', JSON.stringify({
+                    localStorage.setItem('currentUser', JSON.stringify({
                         id: user.id,
                         phone: customerData.phone,
                         email: customerData.email,
@@ -441,7 +441,7 @@
                             type: 'customer'
                         };
                         
-                        sessionStorage.setItem('currentUser', JSON.stringify(customerSession));
+                        localStorage.setItem('currentUser', JSON.stringify(customerSession));
 
                         console.log('💾 Session data stored');
 
