@@ -1578,6 +1578,7 @@
                     const { error: insertError } = await supabase
                         .from('cart')
                         .insert({
+                            product_id: currentProduct.id,
                             variant_id: selectedVariant.id,
                             variant_sku: selectedVariant.variant_sku,
                             customer_id: user.id,

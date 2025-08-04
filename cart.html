@@ -1133,7 +1133,7 @@ async function testN8nConnection() {
                 // First get cart items
                 const { data: cart, error: cartError } = await supabase
                     .from('cart')
-                    .select('id, product_id, quantity')
+                    .select('id, product_id, variant_id, variant_sku, quantity')
                     .eq('customer_id', userId);
 
                 if (cartError) {
@@ -1151,11 +1151,13 @@ async function testN8nConnection() {
 
                 // Get product details for each cart item
                 const productIds = cart.map(item => item.product_id);
+                const variantIds = cart.map(item => item.variant_id).filter(id => id);
                 console.log("Product IDs to fetch:", productIds);
+                console.log("Variant IDs to fetch:", variantIds);
 
                 const { data: productData, error: productError } = await supabase
                     .from('products')
-                    .select('id, product_id, name, price, manu_price, quantity, category, image_url') // Added manu_price
+                    .select('id, product_id, name, category, image_url, description')
                     .in('id', productIds);
 
                 if (productError) {
@@ -1165,10 +1167,31 @@ async function testN8nConnection() {
 
                 console.log("Product data retrieved:", productData);
 
-                // Create a lookup object for products
+                // Get variant details if there are any
+                let variantData = [];
+                if (variantIds.length > 0) {
+                    const { data: variants, error: variantError } = await supabase
+                        .from('product_variants')
+                        .select('id, variant_name, variant_sku, price, manu_price, quantity')
+                        .in('id', variantIds);
+
+                    if (variantError) {
+                        console.error('Error loading variant details:', variantError);
+                    } else {
+                        variantData = variants || [];
+                        console.log("Variant data retrieved:", variantData);
+                    }
+                }
+
+                // Create lookup objects for products and variants
                 products = {};
                 productData.forEach(product => {
                     products[product.id] = product;
+                });
+
+                const variants = {};
+                variantData.forEach(variant => {
+                    variants[variant.id] = variant;
                 });
 
                 // Get current user's Merchant status for pricing
@@ -1187,19 +1210,40 @@ async function testN8nConnection() {
                         return null;
                     }
 
+                    // Get variant details (required for pricing)
+                    const variant = item.variant_id ? variants[item.variant_id] : null;
+                    
+                    if (!variant) {
+                        console.warn(`Variant not found for cart item ID: ${item.id}, variant_id: ${item.variant_id}`);
+                        return null;
+                    }
+                    
+                    // Use variant pricing
+                    let basePrice = variant.price;
+                    let baseManuPrice = variant.manu_price;
+                    let itemName = `${product.name} - ${variant.variant_name}`;
+                    let itemSku = variant.variant_sku;
+                    let itemQuantity = variant.quantity;
+
                     // Apply Merchant pricing if applicable
-                    const displayPrice = isMerchant && product.manu_price ? product.manu_price : product.price;
+                    const displayPrice = isMerchant && baseManuPrice ? baseManuPrice : basePrice;
                     const productWithPricing = {
                         ...product,
+                        name: itemName,
+                        product_id: itemSku,
                         price: displayPrice,
-                        originalPrice: product.price,
-                        manu_price: product.manu_price || 0,
-                        isMerchantPrice: isMerchant && product.manu_price
+                        originalPrice: basePrice,
+                        manu_price: baseManuPrice || 0,
+                        isMerchantPrice: isMerchant && baseManuPrice,
+                        quantity: itemQuantity,
+                        variant: variant
                     };
 
                     return {
                         id: item.id,
                         productId: item.product_id,
+                        variantId: item.variant_id,
+                        variantSku: item.variant_sku,
                         quantity: item.quantity,
                         product: productWithPricing
                     };
