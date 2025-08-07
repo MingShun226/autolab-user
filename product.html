@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details - Autolabs</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Import Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -682,11 +683,11 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.7);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 50000;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s;
@@ -705,6 +706,12 @@
             width: 90%;
             max-width: 450px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .quantity-modal {
+            transform: scale(1);
         }
 
         .modal-product-info {
@@ -726,6 +733,8 @@
             margin-bottom: 8px;
             font-size: 14px;
             color: var(--neutral-600);
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .modal-product-price {
@@ -751,8 +760,19 @@
             background: none;
             border: none;
             cursor: pointer;
-            padding: 5px;
+            padding: 8px;
             color: var(--neutral-500);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-modal:hover {
+            background-color: var(--neutral-100);
+            color: var(--primary-500);
+            transform: scale(1.1);
         }
         
         .quantity-controls {
@@ -764,30 +784,62 @@
         }
         
         .quantity-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            border: 1px solid var(--neutral-200);
-            background-color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            border: 2px solid var(--neutral-300);
+            background: white;
             font-size: 20px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--neutral-600);
         }
         
         .quantity-btn:hover {
-            background-color: #f8f9fa;
-            border-color: #e21b1b;
-            color: var(--primary-500);
+            background: var(--primary-50);
+            border-color: var(--primary-400);
+            color: var(--primary-600);
+            transform: scale(1.05);
+        }
+
+        .quantity-btn:active {
+            transform: scale(0.95);
+        }
+
+        .quantity-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .quantity-btn:disabled:hover {
+            background: white;
+            border-color: var(--neutral-300);
+            color: var(--neutral-600);
+            transform: none;
         }
         
         .quantity-input {
-            width: 60px;
-            height: 40px;
-            border: 1px solid var(--neutral-200);
-            border-radius: 8px;
+            width: 80px;
+            height: 45px;
+            border: 2px solid var(--neutral-300);
+            border-radius: 12px;
             text-align: center;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
+            color: var(--neutral-800);
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .quantity-input:focus {
+            outline: none;
+            border-color: var(--primary-400);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
         }
         
         .modal-actions {
@@ -798,31 +850,44 @@
         
         .modal-btn {
             flex: 1;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 500;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
         }
         
         .cancel-btn {
-            background-color: #f8f9fa;
-            border: 1px solid var(--neutral-200);
-            color: #555;
-        }
-        
-        .confirm-btn {
-            background-color: #e21b1b;
-            border: none;
-            color: white;
+            background: var(--neutral-100);
+            border: 2px solid var(--neutral-300);
+            color: var(--neutral-700);
         }
         
         .cancel-btn:hover {
-            background-color: var(--neutral-100);
+            background: var(--neutral-200);
+            color: var(--neutral-800);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .confirm-btn {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
         }
         
         .confirm-btn:hover {
-            background-color: #c41818;
+            background: linear-gradient(135deg, var(--primary-600), var(--secondary-500));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .confirm-btn:active, .cancel-btn:active {
+            transform: translateY(0);
         }
 
         /* Add-to-cart confirmation toast */
@@ -836,7 +901,7 @@
             padding: 15px 25px;
             z-index: 1000;
             transition: all 0.3s;
-            border: 1px solid #e9ecef;
+            border: 1px solid var(--neutral-200);
             opacity: 0;
             transform: translateY(20px);
         }
@@ -853,12 +918,12 @@
         }
         
         .confirm-content svg {
-            color: #34A853;
+            color: var(--success);
         }
         
         .confirm-product-name {
             font-weight: 500;
-            color: #2c3e50;
+            color: var(--neutral-700);
         }
 
         /* Responsive Design */
@@ -1013,12 +1078,12 @@
                     <img class="main-image" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+" alt="Loading...">
                 </div>
                 
-                <!-- Product Specifications (moved to thumbnail position) -->
+                <!-- Product Specifications -->
                 <div class="product-specs">
                     <div class="specs-header">Product Specifications</div>
                     <div class="specs-content">
                         <div class="spec-row">
-                            <div class="spec-label">Car Brand</div>
+                            <div class="spec-label">Brand & Model</div>
                             <div class="spec-value" id="specBrandModel">Loading...</div>
                         </div>
                         <div class="spec-row">
@@ -1084,7 +1149,7 @@
                 <!-- Product Meta -->
                 <div class="product-meta">
                     <div class="meta-item">
-                        <span class="meta-label">SKU:</span>
+                        <span class="meta-label">Product ID:</span>
                         <span id="parentSku">Loading...</span>
                     </div>
                     <div class="meta-item">
@@ -1114,7 +1179,6 @@
                 </div>
             </div>
         </div>
-
 
         <!-- Quantity Modal -->
         <div class="modal-overlay" id="quantityModal">
@@ -1158,7 +1222,6 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // Supabase config
         const supabaseUrl = 'https://bbwimjvqpyxwhovihtfm.supabase.co';
@@ -1182,102 +1245,78 @@
             return params.get('id');
         }
 
-        // Fetch product with variants from Supabase
+        // Fetch product with variants from Supabase - UPDATED FOR NEW SCHEMA
         async function fetchProductWithVariants(productId) {
-            console.log('Fetching product with variants for ID:', productId);
+            console.log('🔍 Fetching product with ID:', productId);
             
-            // First get parent product
-            const { data: parentProduct, error: parentError } = await supabase
-                .from('products')
-                .select('*')
-                .eq('product_id', productId)
-                .single();
-            
-            if (parentError || !parentProduct) {
-                console.error('Parent product not found:', parentError);
-                return null;
-            }
+            try {
+                // First get parent product from products table
+                const { data: parentProduct, error: parentError } = await supabase
+                    .from('products')
+                    .select(`
+                        *,
+                        brands (name),
+                        categories (name)
+                    `)
+                    .eq('product_id', productId)
+                    .single();
+                
+                if (parentError) {
+                    console.error('❌ Parent product not found:', parentError);
+                    return null;
+                }
 
-            console.log('Parent product found:', parentProduct);
+                console.log('✅ Parent product found:', parentProduct);
 
-            // Get variants if the product has variants
-            let variants = [];
-            if (parentProduct.has_variants) {
+                // Get all variants for this product
                 const { data: variantData, error: variantError } = await supabase
                     .from('product_variants')
                     .select(`
                         *,
                         variant_components (
-                            component_sku,
-                            component_name,
-                            quantity
+                            *,
+                            components (
+                                sku,
+                                name,
+                                type
+                            )
                         )
                     `)
-                    .eq('parent_product_id', parentProduct.id)
-                    .eq('is_active', true);
+                    .eq('product_id', parentProduct.id)
+                    .eq('is_active', true)
+                    .order('display_order');
                 
+                let variants = [];
                 if (variantError) {
-                    console.error('Error fetching variants:', variantError);
+                    console.error('⚠️ Error fetching variants:', variantError);
                 } else {
                     variants = variantData || [];
-                    
-                    // Custom ordering: OEM first, then Socket, then Complete Package
-                    const orderPriority = {
-                        'oem': 1,
-                        'socket': 2, 
-                        'package': 3,
-                        'complete': 3 // In case it's named 'complete' instead of 'package'
-                    };
-                    
-                    variants.sort((a, b) => {
-                        // Check variant_name for ordering keywords
-                        const nameA = a.variant_name?.toLowerCase() || '';
-                        const nameB = b.variant_name?.toLowerCase() || '';
-                        
-                        let priorityA = 999;
-                        let priorityB = 999;
-                        
-                        // Determine priority based on variant name content
-                        if (nameA.includes('oem')) priorityA = 1;
-                        else if (nameA.includes('socket') || nameA.includes('canbus')) priorityA = 2;
-                        else if (nameA.includes('package') || nameA.includes('complete')) priorityA = 3;
-                        
-                        if (nameB.includes('oem')) priorityB = 1;
-                        else if (nameB.includes('socket') || nameB.includes('canbus')) priorityB = 2;
-                        else if (nameB.includes('package') || nameB.includes('complete')) priorityB = 3;
-                        
-                        // Fallback to variant_type if name-based sorting doesn't work
-                        if (priorityA === 999) {
-                            priorityA = orderPriority[a.variant_type?.toLowerCase()] || 999;
-                        }
-                        if (priorityB === 999) {
-                            priorityB = orderPriority[b.variant_type?.toLowerCase()] || 999;
-                        }
-                        
-                        return priorityA - priorityB;
-                    });
-                    
-                    console.log('Variants found and sorted:', variants);
+                    console.log(`✅ Found ${variants.length} variants`);
                 }
-            }
 
-            return {
-                ...parentProduct,
-                variants: variants
-            };
+                // Build complete product object
+                return {
+                    ...parentProduct,
+                    brand: parentProduct.brands?.name || 'Unknown Brand',
+                    category: parentProduct.categories?.name || 'Unknown Category',
+                    variants: variants
+                };
+
+            } catch (error) {
+                console.error('❌ Error in fetchProductWithVariants:', error);
+                return null;
+            }
         }
 
-        // Render product with variants
+        // Render product with variants - UPDATED FOR NEW SCHEMA
         function renderProductWithVariants(product) {
-            console.log('Rendering product with variants:', product);
+            console.log('🎨 Rendering product with variants:', product);
             
-            // Update basic product info
+            // Update product image
             if (product.image_url) {
                 const imgElem = document.querySelector('.main-image');
                 imgElem.src = product.image_url;
                 imgElem.alt = product.name;
-                
-                // Add click event for image enlargement
                 imgElem.addEventListener('click', enlargeImage);
             }
             
@@ -1292,7 +1331,7 @@
             document.getElementById('parentSku').textContent = product.product_id || 'N/A';
             document.getElementById('variantCount').textContent = product.variants?.length || 0;
             
-            // Update specifications with database fields
+            // Update specifications with NEW database fields
             const brandModel = `${product.brand || 'Unknown'} ${product.model || ''}`.trim();
             document.getElementById('specBrandModel').textContent = brandModel || 'Not specified';
             document.getElementById('specCategory').textContent = product.category || 'Not specified';
@@ -1307,13 +1346,12 @@
                 renderVariantOptions(productVariants);
                 document.getElementById('variantSelection').style.display = 'block';
             } else {
-                // No variants - treat as single product
-                const price = product.price || 0;
-                document.querySelector('.current-price').textContent = `RM ${price.toFixed(2)}`;
+                // No variants - show as unavailable (since our new schema requires variants)
+                document.querySelector('.current-price').textContent = 'Contact for Price';
                 
                 const addBtn = document.getElementById('showQuantityModal');
-                addBtn.disabled = false;
-                addBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Add to Cart';
+                addBtn.disabled = true;
+                addBtn.innerHTML = 'Contact Us for Availability';
             }
             
             // Show appropriate badges
@@ -1323,7 +1361,7 @@
         // Image enlarge functionality
         function enlargeImage() {
             const mainImage = document.querySelector('.main-image');
-            if (!mainImage || !mainImage.src) return;
+            if (!mainImage || !mainImage.src || mainImage.src.includes('data:image/svg+xml')) return;
             
             // Create modal for enlarged image
             const modal = document.createElement('div');
@@ -1334,7 +1372,7 @@
                 width: 100%;
                 height: 100%;
                 background: rgba(0, 0, 0, 0.9);
-                z-index: 9999;
+                z-index: 99999;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1379,51 +1417,64 @@
             // Hide all badges first
             Object.values(badges).forEach(badge => badge.style.display = 'none');
             
-            // Show low stock badge if total quantity is low
-            const totalStock = variants.length > 0 
-                ? variants.reduce((sum, variant) => sum + (variant.quantity || 0), 0)
-                : (product.quantity || 0);
+            // Calculate total available stock from variants
+            let totalStock = 0;
+            if (variants && variants.length > 0) {
+                totalStock = variants.reduce((sum, variant) => sum + (variant.available_stock || 0), 0);
+            }
             
+            // Show low stock badge if total quantity is low
             if (totalStock > 0 && totalStock <= 10) {
                 badges.lowStock.style.display = 'block';
             }
         }
 
-        // Render variant options
+        // Render variant options - UPDATED FOR NEW SCHEMA
         function renderVariantOptions(variants) {
             const container = document.getElementById('variantOptions');
             if (!container || !variants.length) return;
             
+            console.log('🎛️ Rendering variant options:', variants);
+            
             container.innerHTML = variants.map((variant, index) => {
                 // Get current user to determine pricing
                 const userStr = localStorage.getItem('currentUser');
-                let displayPrice = variant.price;
+                let displayPrice = variant.retail_price || 0;
                 let priceLabel = '';
                 
                 if (userStr) {
                     const user = JSON.parse(userStr);
-                    if (user.status === 'merchant' && variant.manu_price) {
-                        displayPrice = variant.manu_price;
-                        priceLabel = ' (B2B Price)';
+                    if (user.status === 'merchant' && variant.wholesale_price) {
+                        displayPrice = variant.wholesale_price;
+                        priceLabel = ' <span style="color: var(--secondary-600); font-size: 14px;">(B2B Price)</span>';
                     }
                 }
                 
-                // Build components display for packages
+                // Build components display
                 let componentsDisplay = '';
-                if (variant.variant_type === 'package' && variant.variant_components && variant.variant_components.length > 0) {
-                    const componentNames = variant.variant_components.map(c => c.component_name).join(', ');
-                    componentsDisplay = `<div class="variant-components">Includes: ${componentNames}</div>`;
+                if (variant.variant_components && variant.variant_components.length > 0) {
+                    const componentNames = variant.variant_components
+                        .map(vc => vc.components?.name || vc.component_sku)
+                        .filter(Boolean)
+                        .join(', ');
+                    if (componentNames) {
+                        componentsDisplay = `<div class="variant-components">Components: ${componentNames}</div>`;
+                    }
                 }
+                
+                const stockStatus = variant.available_stock > 0 ? `${variant.available_stock} units` : 'Out of Stock';
+                const stockColor = variant.available_stock > 0 ? 'var(--success-dark)' : 'var(--error-dark)';
                 
                 return `
                     <div class="variant-option" data-variant-id="${variant.id}" onclick="selectVariant('${variant.id}')">
                         <div class="variant-label">
                             <div class="variant-info">
-                                <span class="variant-name">${variant.variant_name}</span>
+                                <span class="variant-name">${variant.variant_name || 'Unnamed Variant'}</span>
                                 <span class="variant-price">RM ${displayPrice.toFixed(2)}${priceLabel}</span>
                             </div>
                             <div class="variant-description">
-                                SKU: ${variant.variant_sku} | Stock: ${variant.quantity || 0} units
+                                SKU: ${variant.variant_sku || 'N/A'} | 
+                                <span style="color: ${stockColor}; font-weight: 500;">Stock: ${stockStatus}</span>
                             </div>
                             ${componentsDisplay}
                         </div>
@@ -1431,32 +1482,38 @@
                 `;
             }).join('');
             
-            // Auto-select first variant
-            if (variants.length > 0) {
+            // Auto-select first available variant
+            const availableVariant = variants.find(v => v.available_stock > 0);
+            if (availableVariant) {
+                selectVariant(availableVariant.id);
+            } else if (variants.length > 0) {
+                // If no stock, select first variant but disable add button
                 selectVariant(variants[0].id);
             }
         }
 
-        // Handle variant selection
+        // Handle variant selection - UPDATED FOR NEW SCHEMA
         function selectVariant(variantId) {
             selectedVariant = productVariants.find(v => v.id === variantId);
             if (!selectedVariant) return;
+            
+            console.log('✅ Selected variant:', selectedVariant);
             
             // Update UI
             document.querySelectorAll('.variant-option').forEach(option => {
                 option.classList.remove('selected');
             });
-            document.querySelector(`[data-variant-id="${variantId}"]`).classList.add('selected');
+            document.querySelector(`[data-variant-id="${variantId}"]`)?.classList.add('selected');
             
             // Update price display
             const userStr = localStorage.getItem('currentUser');
-            let displayPrice = selectedVariant.price;
+            let displayPrice = selectedVariant.retail_price || 0;
             let priceText = `RM ${displayPrice.toFixed(2)}`;
             
             if (userStr) {
                 const user = JSON.parse(userStr);
-                if (user.status === 'merchant' && selectedVariant.manu_price) {
-                    displayPrice = selectedVariant.manu_price;
+                if (user.status === 'merchant' && selectedVariant.wholesale_price) {
+                    displayPrice = selectedVariant.wholesale_price;
                     priceText = `RM ${displayPrice.toFixed(2)} <span style="color: var(--secondary-600); font-size: 20px; margin-left: 8px;">(B2B Price)</span>`;
                 }
             }
@@ -1465,18 +1522,16 @@
             
             // Update add to cart button
             const addBtn = document.getElementById('showQuantityModal');
-            if (selectedVariant.quantity === 0) {
+            if (selectedVariant.available_stock === 0) {
                 addBtn.disabled = true;
                 addBtn.innerHTML = 'Out of Stock';
             } else {
                 addBtn.disabled = false;
                 addBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Add to Cart';
             }
-            
-            console.log('Selected variant:', selectedVariant);
         }
 
-        // Show quantity modal
+        // Show quantity modal - UPDATED FOR NEW SCHEMA
         function showQuantityModal() {
             if (!selectedVariant) {
                 alert('Please select a variant first');
@@ -1485,39 +1540,46 @@
 
             // Populate modal with variant information
             document.getElementById('modalProductName').textContent = `${currentProduct.name} - ${selectedVariant.variant_name}`;
-            document.getElementById('modalProductSKU').textContent = selectedVariant.variant_sku;
+            document.getElementById('modalProductSKU').textContent = selectedVariant.variant_sku || 'N/A';
             
             // Display stock status
             const stockElement = document.getElementById('modalProductStock');
-            const quantity = selectedVariant.quantity || 0;
+            const quantity = selectedVariant.available_stock || 0;
             if (quantity > 0) {
                 stockElement.textContent = `${quantity} units`;
                 if (quantity > 30) {
-                    stockElement.style.color = '#34A853';
+                    stockElement.style.color = 'var(--success-dark)';
                 } else {
-                    stockElement.style.color = '#FBBC05';
+                    stockElement.style.color = 'var(--warning-dark)';
                 }
             } else {
                 stockElement.textContent = 'Out of Stock';
-                stockElement.style.color = '#EA4335';
+                stockElement.style.color = 'var(--error-dark)';
             }
             
             // Display price
             const userStr = localStorage.getItem('currentUser');
-            let displayPrice = selectedVariant.price;
+            let displayPrice = selectedVariant.retail_price || 0;
             let priceText = `RM ${displayPrice.toFixed(2)}`;
             
             if (userStr) {
                 const user = JSON.parse(userStr);
-                if (user.status === 'merchant' && selectedVariant.manu_price) {
-                    displayPrice = selectedVariant.manu_price;
+                if (user.status === 'merchant' && selectedVariant.wholesale_price) {
+                    displayPrice = selectedVariant.wholesale_price;
                     priceText = `RM ${displayPrice.toFixed(2)} <span style="color: var(--secondary-600); font-size: 14px;">(B2B Price)</span>`;
                 }
             }
             
             document.getElementById('modalProductPrice').innerHTML = priceText;
 
-            document.getElementById('quantityInput').value = 1;
+            // Setup quantity controls
+            const quantityInput = document.getElementById('quantityInput');
+            quantityInput.value = 1;
+            quantityInput.max = Math.max(1, quantity);
+            
+            // Update quantity buttons state
+            updateQuantityButtons();
+            
             document.getElementById('quantityModal').classList.add('show');
             document.body.style.overflow = 'hidden';
         }
@@ -1527,7 +1589,25 @@
             document.body.style.overflow = '';
         }
 
-        // Add to cart with variant
+        // Add this new function to update quantity button states
+        function updateQuantityButtons() {
+            const quantityInput = document.getElementById('quantityInput');
+            const currentVal = parseInt(quantityInput.value);
+            const maxStock = selectedVariant ? selectedVariant.available_stock : 1;
+            
+            const decreaseBtn = document.getElementById('decreaseQuantity');
+            const increaseBtn = document.getElementById('increaseQuantity');
+            
+            // Disable decrease button if at minimum
+            decreaseBtn.disabled = currentVal <= 1;
+            decreaseBtn.style.opacity = currentVal <= 1 ? '0.5' : '1';
+            
+            // Disable increase button if at maximum stock
+            increaseBtn.disabled = currentVal >= maxStock;
+            increaseBtn.style.opacity = currentVal >= maxStock ? '0.5' : '1';
+        }
+
+        // Add to cart with variant - UPDATED FOR NEW SCHEMA
         async function addToCart() {
             if (!selectedVariant) {
                 alert('Please select a variant first');
@@ -1548,6 +1628,11 @@
                 }
                 
                 const user = JSON.parse(userStr);
+                console.log('🛒 Adding to cart:', { 
+                    variant: selectedVariant.id, 
+                    customer: user.id, 
+                    quantity 
+                });
                 
                 // Check if variant is already in cart
                 const { data: existingItems, error: queryError } = await supabase
@@ -1557,6 +1642,7 @@
                     .eq('customer_id', user.id);
                 
                 if (queryError) {
+                    console.error('Cart query error:', queryError);
                     alert('Error adding to cart: ' + queryError.message);
                     return;
                 }
@@ -1570,25 +1656,28 @@
                         .eq('id', existingItems[0].id);
                     
                     if (updateError) {
+                        console.error('Cart update error:', updateError);
                         alert('Error updating cart: ' + updateError.message);
                         return;
                     }
+                    console.log('✅ Cart item updated');
                 } else {
-                    // Insert new cart item
+                    // Insert new cart item using the new schema
                     const { error: insertError } = await supabase
                         .from('cart')
                         .insert({
-                            product_id: currentProduct.id,
-                            variant_id: selectedVariant.id,
-                            variant_sku: selectedVariant.variant_sku,
+                            product_id: currentProduct.id, // Parent product ID
+                            variant_id: selectedVariant.id, // Specific variant ID
                             customer_id: user.id,
                             quantity: quantity
                         });
                     
                     if (insertError) {
+                        console.error('Cart insert error:', insertError);
                         alert('Error adding to cart: ' + insertError.message);
                         return;
                     }
+                    console.log('✅ Cart item inserted');
                 }
                 
                 showAddConfirmation(quantity, selectedVariant.variant_name);
@@ -1625,7 +1714,7 @@
             }, 3000);
         }
 
-        // Load cart count
+        // Load cart count - UPDATED FOR NEW SCHEMA
         async function loadCartCount() {
             try {
                 const userStr = localStorage.getItem('currentUser');
@@ -1637,7 +1726,10 @@
                     .select('quantity')
                     .eq('customer_id', user.id);
                 
-                if (error) return;
+                if (error) {
+                    console.error('Error loading cart count:', error);
+                    return;
+                }
                 
                 const totalItems = data.reduce((total, item) => total + item.quantity, 0);
                 document.querySelector('.cart-count').textContent = totalItems;
@@ -1648,27 +1740,56 @@
 
         // User authentication
         async function checkAuthentication() {
-            const userStr = localStorage.getItem('currentUser');
-            if (userStr) {
-                const user = JSON.parse(userStr);
-                updateUIForLoggedInUser(user);
-            } else {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    const { data: customer, error } = await supabase
-                        .from('customers')
-                        .select('*')
-                        .eq('id', user.id)
-                        .single();
-                    if (!error && customer) {
-                        localStorage.setItem('currentUser', JSON.stringify(customer));
-                        updateUIForLoggedInUser(customer);
-                    } else {
-                        window.location.href = "customer-login.html";
-                    }
-                } else {
-                    window.location.href = "customer-login.html";
+            try {
+                // First check localStorage for existing user data
+                const userStr = localStorage.getItem('currentUser');
+                if (userStr) {
+                    const storedUser = JSON.parse(userStr);
+                    console.log('✅ Found user in localStorage:', {
+                        name: storedUser.name,
+                        status: storedUser.status,
+                        isMerchant: storedUser.status === 'merchant'
+                    });
+                    
+                    updateUIForLoggedInUser(storedUser);
+                    return;
                 }
+
+                // If no localStorage, try Supabase auth
+                console.log('🔍 No localStorage found, checking Supabase auth...');
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+                
+                if (authError || !user) {
+                    console.log('❌ No user found, redirecting to login');
+                    window.location.href = "customer-login.html";
+                    return;
+                }
+
+                // Get customer data by phone number
+                let phoneNumber = user.phone || user.user_metadata?.phone || user.app_metadata?.phone;
+                if (!phoneNumber) {
+                    console.error('No phone number found in auth user');
+                    window.location.href = "customer-login.html";
+                    return;
+                }
+
+                const { data: customer, error: customerError } = await supabase
+                    .from('customers')
+                    .select('*')
+                    .eq('phone', phoneNumber)
+                    .single();
+
+                if (customerError || !customer) {
+                    console.error('Customer not found by phone:', { phoneNumber, error: customerError });
+                    window.location.href = "customer-login.html";
+                    return;
+                }
+
+                localStorage.setItem('currentUser', JSON.stringify(customer));
+                updateUIForLoggedInUser(customer);
+            } catch (error) {
+                console.error('Authentication error:', error);
+                window.location.href = "customer-login.html";
             }
         }
 
@@ -1680,6 +1801,7 @@
             const statusElement = document.getElementById('userStatus');
             if (user.status === 'merchant') {
                 statusElement.innerHTML = '<span style="color: var(--secondary-600); font-weight: 600;">Merchant Customer</span>';
+                console.log('✅ Merchant customer detected - will show B2B prices');
             } else {
                 statusElement.textContent = 'Customer';
             }
@@ -1689,6 +1811,7 @@
                 renderVariantOptions(productVariants);
             }
             
+            // Setup dropdown
             document.getElementById('userAvatar').addEventListener('click', toggleDropdown);
             document.addEventListener('click', function (e) {
                 const dropdown = document.getElementById('userDropdown');
@@ -1708,6 +1831,7 @@
         async function logout() {
             const { error } = await supabase.auth.signOut();
             if (error) {
+                console.error('Error signing out:', error);
                 alert('Error signing out. Please try again.');
             } else {
                 localStorage.removeItem('currentUser');
@@ -1715,40 +1839,82 @@
             }
         }
 
+        // Setup quantity controls
+        function setupQuantityControls() {
+            document.getElementById('decreaseQuantity').addEventListener('click', function () {
+                const quantityInput = document.getElementById('quantityInput');
+                const currentVal = parseInt(quantityInput.value);
+                if (currentVal > 1) {
+                    quantityInput.value = currentVal - 1;
+                    updateQuantityButtons();
+                }
+            });
+
+            document.getElementById('increaseQuantity').addEventListener('click', function () {
+                const quantityInput = document.getElementById('quantityInput');
+                const currentVal = parseInt(quantityInput.value);
+                const maxStock = selectedVariant ? selectedVariant.available_stock : 1;
+                if (currentVal < maxStock) {
+                    quantityInput.value = currentVal + 1;
+                    updateQuantityButtons();
+                }
+            });
+            
+            // Add input event listener to validate manual input
+            document.getElementById('quantityInput').addEventListener('input', function() {
+                const val = parseInt(this.value);
+                const maxStock = selectedVariant ? selectedVariant.available_stock : 1;
+                
+                if (val < 1) this.value = 1;
+                if (val > maxStock) this.value = maxStock;
+                
+                updateQuantityButtons();
+            });
+        }
+
         // Initialize page
         document.addEventListener('DOMContentLoaded', async function() {
-            await checkAuthentication();
-            await loadCartCount();
+            console.log('🚀 Initializing product page...');
             
-            const productId = getProductIdFromUrl();
-            if (!productId) {
-                document.querySelector('.product-name').textContent = 'No Product ID';
-                document.querySelector('.product-description').innerHTML = '<strong>Error:</strong><br>No product ID specified in URL.';
-                return;
+            try {
+                await checkAuthentication();
+                await loadCartCount();
+                
+                const productId = getProductIdFromUrl();
+                if (!productId) {
+                    console.error('❌ No product ID in URL');
+                    document.querySelector('.product-name').textContent = 'No Product ID';
+                    document.getElementById('specDescription').textContent = 'Error: No product ID specified in URL.';
+                    return;
+                }
+                
+                console.log('🔍 Loading product:', productId);
+                const product = await fetchProductWithVariants(productId);
+                if (!product) {
+                    console.error('❌ Product not found');
+                    document.querySelector('.product-name').textContent = 'Product Not Found';
+                    document.getElementById('specDescription').textContent = 'Error: Product not found in database.';
+                    return;
+                }
+                
+                currentProduct = product;
+                renderProductWithVariants(product);
+                
+                // Setup event listeners
+                document.getElementById('showQuantityModal').addEventListener('click', showQuantityModal);
+                document.getElementById('closeModal').addEventListener('click', closeQuantityModal);
+                document.getElementById('cancelBtn').addEventListener('click', closeQuantityModal);
+                document.getElementById('addToCartBtn').addEventListener('click', addToCart);
+                
+                // Setup quantity controls
+                setupQuantityControls();
+                
+                console.log('✅ Product page initialized successfully');
+            } catch (error) {
+                console.error('❌ Error initializing product page:', error);
+                document.querySelector('.product-name').textContent = 'Loading Error';
+                document.getElementById('specDescription').textContent = `Error: ${error.message}`;
             }
-            
-            const product = await fetchProductWithVariants(productId);
-            if (!product) {
-                document.querySelector('.product-name').textContent = 'Product Not Found';
-                document.querySelector('.product-description').innerHTML = '<strong>Error:</strong><br>Product not found in database.';
-                return;
-            }
-            
-            currentProduct = product;
-            renderProductWithVariants(product);
-            
-            // Modal event listeners
-            document.getElementById('showQuantityModal').addEventListener('click', showQuantityModal);
-            document.getElementById('closeModal').addEventListener('click', closeQuantityModal);
-            document.getElementById('cancelBtn').addEventListener('click', closeQuantityModal);
-            document.getElementById('addToCartBtn').addEventListener('click', addToCart);
-            document.getElementById('decreaseQuantity').addEventListener('click', function () {
-                const val = parseInt(document.getElementById('quantityInput').value);
-                if (val > 1) document.getElementById('quantityInput').value = val - 1;
-            });
-            document.getElementById('increaseQuantity').addEventListener('click', function () {
-                document.getElementById('quantityInput').value = parseInt(document.getElementById('quantityInput').value) + 1;
-            });
         });
     </script>
 </body>
