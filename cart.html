@@ -1155,22 +1155,22 @@ async function testN8nConnection() {
         console.log("Product IDs to fetch:", productIds);
         console.log("Variant IDs to fetch:", variantIds);
 
-        // Fetch product details with proper foreign key relationships
+        // Fetch product details with proper schema
         const { data: productData, error: productError } = await supabase
             .from('products')
             .select(`
                 id,
                 product_id,
                 name,
-                category_id,
+                category,
+                brand,
                 brand_id,
                 image_url,
                 description,
                 model,
-                year_range,
-                screen_size,
-                brands!products_brand_id_fkey (name),
-                categories!products_category_id_fkey (name)
+                year,
+                screensize,
+                brands (id, name, code)
             `)
             .in('id', productIds);
 
@@ -1185,13 +1185,14 @@ async function testN8nConnection() {
                     id,
                     product_id,
                     name,
-                    category_id,
+                    category,
+                    brand,
                     brand_id,
                     image_url,
                     description,
                     model,
-                    year_range,
-                    screen_size
+                    year,
+                    screensize
                 `)
                 .in('id', productIds);
 
@@ -1255,9 +1256,19 @@ async function testN8nConnection() {
                     id,
                     variant_name,
                     variant_sku,
-                    retail_price,
-                    wholesale_price,
-                    available_stock
+                    variant_type,
+                    available_stock,
+                    variant_components (
+                        quantity,
+                        components (
+                            id,
+                            sku,
+                            name,
+                            type,
+                            retail_price,
+                            wholesale_price
+                        )
+                    )
                 `)
                 .in('id', variantIds);
 
@@ -1303,12 +1314,27 @@ async function testN8nConnection() {
                 return null;
             }
 
+            // Calculate price from components
+            let retailPrice = 0;
+            let wholesalePrice = 0;
+            
+            if (variant.variant_components && variant.variant_components.length > 0) {
+                variant.variant_components.forEach(vc => {
+                    const component = vc.components;
+                    if (component) {
+                        const quantity = vc.quantity || 1;
+                        retailPrice += (component.retail_price || 0) * quantity;
+                        wholesalePrice += (component.wholesale_price || 0) * quantity;
+                    }
+                });
+            }
+            
             // Determine display price based on user status
-            let displayPrice = variant.retail_price || 0;
+            let displayPrice = retailPrice;
             let isMerchantPrice = false;
             
-            if (isMerchant && variant.wholesale_price) {
-                displayPrice = variant.wholesale_price;
+            if (isMerchant && wholesalePrice > 0) {
+                displayPrice = wholesalePrice;
                 isMerchantPrice = true;
             }
 
@@ -1321,8 +1347,8 @@ async function testN8nConnection() {
                 name: productName,
                 product_id: variant.variant_sku, // Show variant SKU instead of parent product ID
                 price: displayPrice,
-                originalPrice: variant.retail_price,
-                wholesale_price: variant.wholesale_price || 0,
+                originalPrice: retailPrice,
+                wholesale_price: wholesalePrice,
                 isMerchantPrice: isMerchantPrice,
                 availableStock: variant.available_stock,
                 brand: brandName,
@@ -1672,11 +1698,27 @@ async function refreshCartPricing() {
         if (!item.product || !item.product.variant) return item;
 
         const variant = item.product.variant;
-        let displayPrice = variant.retail_price || 0;
+        
+        // Calculate price from components
+        let retailPrice = 0;
+        let wholesalePrice = 0;
+        
+        if (variant.variant_components && variant.variant_components.length > 0) {
+            variant.variant_components.forEach(vc => {
+                const component = vc.components;
+                if (component) {
+                    const quantity = vc.quantity || 1;
+                    retailPrice += (component.retail_price || 0) * quantity;
+                    wholesalePrice += (component.wholesale_price || 0) * quantity;
+                }
+            });
+        }
+        
+        let displayPrice = retailPrice;
         let isMerchantPrice = false;
         
-        if (isMerchant && variant.wholesale_price) {
-            displayPrice = variant.wholesale_price;
+        if (isMerchant && wholesalePrice > 0) {
+            displayPrice = wholesalePrice;
             isMerchantPrice = true;
         }
         
@@ -1758,6 +1800,7 @@ async function loadCartCount() {
 // With proper component-based stock management
 // ============================================
 
+// REPLACE your entire proceedToCheckout function with this complete version
 async function proceedToCheckout() {
     try {
         console.log('🛒 Starting checkout process...');
@@ -1792,8 +1835,8 @@ async function proceedToCheckout() {
         }
 
         // STEP 1: Validate stock availability before proceeding
-        console.log('📊 Validating stock availability from components...');
-        const stockValidationResults = await validateAndReserveStock(selectedItems, false); // false = just validate, don't reserve yet
+        console.log('📊 Validating stock availability from shared component inventory...');
+        const stockValidationResults = await validateAndReserveStock(selectedItems, false); // false = just validate, don't deduct yet
         
         if (!stockValidationResults.success) {
             alert(`❌ Stock validation failed:\n\n${stockValidationResults.errors.join('\n')}\n\nPlease update your cart and try again.`);
@@ -1814,35 +1857,34 @@ async function proceedToCheckout() {
         if (!checkoutData) return; // User cancelled
 
         // Confirm order placement
-        if (!confirm("Are you sure you want to place this order? Stock will be reserved from shared inventory.")) {
+        if (!confirm("Are you sure you want to place this order? Stock will be deducted from shared component inventory.")) {
             return;
         }
 
         console.log('✅ User confirmed order');
 
-        // STEP 2: Reserve stock from components (this time for real)
-        console.log('📊 Reserving stock from components inventory...');
-        const stockReservationResults = await validateAndReserveStock(selectedItems, true); // true = actually reserve stock
+        // STEP 2: Deduct stock from components (this time for real)
+        console.log('📊 Deducting stock from shared component inventory...');
+        const stockDeductionResults = await validateAndReserveStock(selectedItems, true); // true = actually deduct stock
         
-        if (!stockReservationResults.success) {
-            alert(`❌ Stock reservation failed:\n\n${stockReservationResults.errors.join('\n')}\n\nSomeone else may have purchased these items. Please refresh and try again.`);
+        if (!stockDeductionResults.success) {
+            alert(`❌ Stock deduction failed:\n\n${stockDeductionResults.errors.join('\n')}\n\nSomeone else may have purchased these items. Please refresh and try again.`);
             await loadCartItems(user.id);
             return;
         }
 
-        console.log('✅ Stock reserved successfully from components');
+        console.log('✅ Stock deducted successfully from shared components');
         
         // Check how this affects other products using shared components
-        const sharedComponents = stockReservationResults.reservedComponents.filter(c => 
+        const sharedComponents = stockDeductionResults.reservedComponents.filter(c => 
             c.componentSku.startsWith('CB-') || c.componentSku.startsWith('LHL-')
         );
         
         if (sharedComponents.length > 0) {
             console.log('🔗 Shared components affected:');
             for (const component of sharedComponents) {
-                console.log(`  - ${component.componentSku}: ${component.previousStock} → ${component.newStock}`);
-                // Optional: Check which other products are affected
-                await checkComponentStockAcrossProducts(component.componentSku);
+                console.log(`  - ${component.componentSku}: ${component.previousCurrentStock} → ${component.newCurrentStock}`);
+                // All products using this component are automatically updated
             }
         }
 
@@ -1922,7 +1964,7 @@ async function proceedToCheckout() {
                     variations: item.product.variant?.variant_name || null,
                     category: item.product.category || null,
                     variant_id: item.variantId, // Store variant ID for tracking
-                    reserved_stock: item.quantity // Track how much stock was reserved
+                    reserved_stock: item.quantity // Track how much stock was deducted
                 };
 
                 orderItems.push(orderItem);
@@ -1968,11 +2010,13 @@ async function proceedToCheckout() {
                 paymentStatus: 'pending',
                 orderStatus: 'awaiting_confirmation',
                 // Add component details for admin visibility
-                componentsReserved: stockReservationResults.reservedComponents.map(c => ({
+                componentsDeducted: stockDeductionResults.reservedComponents.map(c => ({
                     sku: c.componentSku,
                     name: c.componentName,
-                    quantity: c.reservedQuantity,
-                    newStock: c.newStock
+                    deductedQuantity: c.deductedQuantity,
+                    newCurrentStock: c.newCurrentStock,
+                    newAvailableStock: c.newAvailableStock,
+                    affectedVariants: c.affectedVariants.map(v => v.itemName)
                 }))
             };
 
@@ -2008,25 +2052,25 @@ async function proceedToCheckout() {
             // Update cart display
             updateCartDisplay();
 
-            // Show success message - CORRECTED to use reservedComponents
+            // Show success message with component deduction details
             showOrderSuccessMessage(
                 orderIdValue, 
                 checkoutData, 
                 selectedTotal, 
                 n8nSuccess, 
-                stockReservationResults.reservedComponents // Changed from reservedItems
+                stockDeductionResults.reservedComponents
             );
 
             console.log('✅ Checkout process completed successfully!');
-            console.log('📊 Component inventory updated for shared stock management');
+            console.log('📊 Shared component inventory updated - all related products now show updated stock');
 
         } catch (error) {
             console.error('❌ Error during order creation, attempting rollback...');
             
-            // ROLLBACK: Restore reserved component stock if order creation failed
-            if (stockReservationResults.reservedComponents && stockReservationResults.reservedComponents.length > 0) {
-                console.log('🔄 Rolling back component stock reservations...');
-                await rollbackComponentReservations(stockReservationResults.reservedComponents); // Use component rollback
+            // ROLLBACK: Restore deducted component stock if order creation failed
+            if (stockDeductionResults.reservedComponents && stockDeductionResults.reservedComponents.length > 0) {
+                console.log('🔄 Rolling back component stock deductions...');
+                await rollbackComponentDeductions(stockDeductionResults.reservedComponents);
             }
             
             // ROLLBACK: Delete order if it was created but items failed
@@ -2110,99 +2154,99 @@ async function checkComponentStockAcrossProducts(componentSku) {
     }
 }
 
-// REPLACE THIS ENTIRE FUNCTION in your cart.html (around line 2120)
-async function validateAndReserveStock(selectedItems, actuallyReserve = false) {
-    console.log(`📊 ${actuallyReserve ? 'Reserving' : 'Validating'} independent variant stock for ${selectedItems.length} items...`);
+// REPLACE validateAndReserveStock function in your cart.html
+async function validateAndReserveStock(selectedItems, actuallyDeduct = false) {
+    console.log(`📊 ${actuallyDeduct ? 'Deducting from' : 'Validating'} shared component inventory for ${selectedItems.length} items...`);
     
     const results = {
         success: true,
         errors: [],
-        reservedComponents: [] // Keep name for compatibility but will contain variant info
+        reservedComponents: []
     };
 
-    // Process each selected item independently
+    // Group items by components to calculate total requirements
+    const componentRequirements = new Map();
+
+    // First pass: Calculate total requirements for each component
     for (const item of selectedItems) {
         try {
-            console.log(`🔍 Validating stock for: ${item.product.name} (Variant ID: ${item.variantId})`);
-            
-            // Get current variant stock directly (no components needed)
-            const { data: variantData, error: variantError } = await supabase
-                .from('product_variants')
-                .select('id, variant_name, variant_sku, available_stock')
-                .eq('id', item.variantId)
-                .single();
-
-            if (variantError) {
-                console.error(`❌ Error fetching variant stock:`, variantError);
-                results.errors.push(`❌ ${item.product.name}: Unable to check stock`);
+            if (!item.variantId) {
+                console.error('❌ Missing variant ID for item:', item);
+                results.errors.push(`❌ ${item.product.name}: No variant ID found`);
                 results.success = false;
                 continue;
             }
 
-            const availableStock = variantData.available_stock || 0;
-            const isValid = availableStock >= item.quantity;
+            console.log(`🔍 Getting components for variant: ${item.product.name} (${item.variantId})`);
 
-            console.log(`📦 ${variantData.variant_name}:`);
-            console.log(`   Requested: ${item.quantity}`);
-            console.log(`   Available: ${availableStock}`);
-            console.log(`   Status: ${isValid ? '✅ Valid' : '❌ Insufficient stock'}`);
+            // Get components for this variant
+            const { data: variantComponents, error: vcError } = await supabase
+                .from('variant_components')
+                .select(`
+                    component_id,
+                    quantity,
+                    components (
+                        id,
+                        sku,
+                        name,
+                        current_stock,
+                        reserved_stock,
+                        available_stock
+                    )
+                `)
+                .eq('variant_id', item.variantId);
 
-            if (!isValid) {
-                results.errors.push(
-                    `❌ ${item.product.name}: Only ${availableStock} available, but ${item.quantity} requested`
-                );
+            if (vcError) {
+                console.error('❌ Error getting variant components:', vcError);
+                results.errors.push(`❌ ${item.product.name}: Unable to get components - ${vcError.message}`);
                 results.success = false;
                 continue;
             }
 
-            // If actuallyReserve = true, deduct the stock immediately
-            if (actuallyReserve) {
-                console.log(`🔄 Deducting ${item.quantity} units from ${variantData.variant_name}...`);
-                
-                const newStock = availableStock - item.quantity;
-                
-                const { data: updatedVariant, error: updateError } = await supabase
-                    .from('product_variants')
-                    .update({
-                        available_stock: newStock,
-                        last_stock_update: new Date().toISOString()
-                    })
-                    .eq('id', item.variantId)
-                    .eq('available_stock', availableStock) // Optimistic lock
-                    .select()
-                    .single();
+            if (!variantComponents || variantComponents.length === 0) {
+                console.error('❌ No components found for variant:', item.variantId);
+                results.errors.push(`❌ ${item.product.name}: No components linked to this variant`);
+                results.success = false;
+                continue;
+            }
 
-                if (updateError || !updatedVariant) {
-                    console.error('❌ Failed to deduct variant stock:', updateError);
-                    
-                    // Rollback any previous deductions
-                    if (results.reservedComponents.length > 0) {
-                        console.log('🔄 Rolling back previous stock deductions...');
-                        await rollbackVariantStockDeductions(results.reservedComponents);
-                        results.reservedComponents = [];
-                    }
-                    
-                    results.errors.push(
-                        `❌ ${item.product.name}: Failed to reserve stock - another order may have taken it`
-                    );
-                    results.success = false;
-                    break;
+            console.log(`📦 Found ${variantComponents.length} components for ${item.product.name}`);
+
+            // Add each component requirement to the map
+            for (const vc of variantComponents) {
+                const component = vc.components;
+                if (!component) {
+                    console.error('❌ Component data missing');
+                    continue;
                 }
 
-                console.log(`✅ Stock deducted for ${variantData.variant_name}:`);
-                console.log(`   Previous Stock: ${availableStock}`);
-                console.log(`   New Stock: ${updatedVariant.available_stock}`);
-                
-                // Track deduction for potential rollback (using same structure for compatibility)
-                results.reservedComponents.push({
-                    variantId: item.variantId,
-                    componentSku: variantData.variant_sku, // For compatibility
-                    componentName: variantData.variant_name, // For compatibility
-                    previousStock: availableStock,
-                    newStock: updatedVariant.available_stock,
-                    reservedQuantity: item.quantity,
-                    productName: item.product.name
-                });
+                const componentId = component.id;
+                const requiredQty = vc.quantity * item.quantity;
+
+                if (componentRequirements.has(componentId)) {
+                    const existing = componentRequirements.get(componentId);
+                    existing.requiredQuantity += requiredQty;
+                    existing.requestingItems.push({
+                        itemName: item.product.name,
+                        quantity: requiredQty,
+                        variantId: item.variantId
+                    });
+                } else {
+                    componentRequirements.set(componentId, {
+                        componentId: componentId,
+                        componentSku: component.sku,
+                        componentName: component.name,
+                        currentStock: component.current_stock || 0,
+                        reservedStock: component.reserved_stock || 0,
+                        availableStock: component.available_stock || 0,
+                        requiredQuantity: requiredQty,
+                        requestingItems: [{
+                            itemName: item.product.name,
+                            quantity: requiredQty,
+                            variantId: item.variantId
+                        }]
+                    });
+                }
             }
 
         } catch (error) {
@@ -2212,45 +2256,219 @@ async function validateAndReserveStock(selectedItems, actuallyReserve = false) {
         }
     }
 
-    if (!results.success) {
-        console.error('❌ Stock validation failed');
+    if (componentRequirements.size === 0) {
+        results.errors.push('❌ No valid components found for any selected items');
+        results.success = false;
         return results;
     }
 
-    if (actuallyReserve && results.success) {
-        console.log(`✅ Successfully deducted stock for ${results.reservedComponents.length} variants`);
-        console.log('📊 Each variant now has independent updated stock levels');
+    console.log('📊 Component requirements summary:');
+    componentRequirements.forEach((req, componentId) => {
+        console.log(`  ${req.componentSku}: Need ${req.requiredQuantity}, Available ${req.availableStock}`);
+        req.requestingItems.forEach(item => {
+            console.log(`    - ${item.itemName}: ${item.quantity} units`);
+        });
+    });
+
+    // Second pass: Validate stock availability
+    for (const [componentId, requirement] of componentRequirements) {
+        if (requirement.availableStock < requirement.requiredQuantity) {
+            const itemsList = requirement.requestingItems
+                .map(item => `${item.itemName} (${item.quantity} units)`)
+                .join(', ');
+            
+            results.errors.push(
+                `❌ Component ${requirement.componentSku} (${requirement.componentName}): ` +
+                `Only ${requirement.availableStock} available, but ${requirement.requiredQuantity} needed for: ${itemsList}`
+            );
+            results.success = false;
+        }
+    }
+
+    if (!results.success) {
+        console.error('❌ Component stock validation failed');
+        return results;
+    }
+
+    // Third pass: Actually deduct stock if requested
+    if (actuallyDeduct) {
+        console.log('🔄 DEDUCTING stock from shared component inventory...');
+
+        for (const [componentId, requirement] of componentRequirements) {
+            try {
+                // Deduct from current_stock (this will automatically update available_stock)
+                const newCurrentStock = requirement.currentStock - requirement.requiredQuantity;
+                
+                console.log(`🔄 Deducting from component ${requirement.componentSku}:`);
+                console.log(`   Current Stock: ${requirement.currentStock} → ${newCurrentStock}`);
+                console.log(`   Reserved Stock: ${requirement.reservedStock} (unchanged)`);
+                console.log(`   Available will become: ${newCurrentStock - requirement.reservedStock}`);
+
+                const { data: updatedComponent, error: updateError } = await supabase
+                    .from('components')
+                    .update({
+                        current_stock: newCurrentStock,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', componentId)
+                    .eq('current_stock', requirement.currentStock) // Optimistic lock
+                    .select()
+                    .single();
+
+                if (updateError || !updatedComponent) {
+                    console.error('❌ Failed to deduct component stock:', updateError);
+                    
+                    // Rollback any previous deductions
+                    if (results.reservedComponents.length > 0) {
+                        console.log('🔄 Rolling back previous deductions...');
+                        await rollbackComponentDeductions(results.reservedComponents);
+                        results.reservedComponents = [];
+                    }
+                    
+                    results.errors.push(
+                        `❌ Component ${requirement.componentSku}: Failed to deduct stock - ` +
+                        `another order may have taken it`
+                    );
+                    results.success = false;
+                    break;
+                }
+
+                console.log(`✅ Deducted ${requirement.requiredQuantity} units from ${requirement.componentSku}`);
+                console.log(`   New current stock: ${updatedComponent.current_stock}`);
+                console.log(`   New available stock: ${updatedComponent.available_stock}`);
+                
+                // Track deduction for potential rollback
+                results.reservedComponents.push({
+                    componentId: componentId,
+                    componentSku: requirement.componentSku,
+                    componentName: requirement.componentName,
+                    previousCurrentStock: requirement.currentStock,
+                    newCurrentStock: updatedComponent.current_stock,
+                    deductedQuantity: requirement.requiredQuantity,
+                    newAvailableStock: updatedComponent.available_stock,
+                    previousAvailableStock: requirement.availableStock,
+                    affectedVariants: requirement.requestingItems
+                });
+
+                // Log inventory transaction
+                await supabase
+                    .from('inventory_transactions')
+                    .insert({
+                        component_id: componentId,
+                        transaction_type: 'sale',
+                        quantity: -requirement.requiredQuantity,
+                        reference_type: 'order',
+                        notes: `Sale - Items: ${requirement.requestingItems.map(i => i.itemName).join(', ')}`
+                    });
+
+                // Update all variant stocks that use this component
+                console.log(`🔄 Updating variant stocks for component ${requirement.componentSku}...`);
+                await updateVariantStocksForComponent(componentId);
+
+            } catch (error) {
+                console.error('❌ Error deducting component stock:', error);
+                
+                if (results.reservedComponents.length > 0) {
+                    await rollbackComponentDeductions(results.reservedComponents);
+                    results.reservedComponents = [];
+                }
+                
+                results.errors.push(`❌ Component ${requirement.componentSku}: ${error.message}`);
+                results.success = false;
+                break;
+            }
+        }
+    }
+
+    if (actuallyDeduct && results.success) {
+        console.log(`✅ Successfully deducted stock from ${results.reservedComponents.length} shared components`);
+        console.log('📊 All products using these components now show updated stock levels');
     } else if (results.success) {
-        console.log('✅ All items have sufficient independent stock');
+        console.log('✅ All items have sufficient stock in shared component inventory');
     }
 
     return results;
 }
 
-// New rollback function for independent variants
-async function rollbackVariantStockDeductions(deductedVariants) {
-    console.log('🔄 Rolling back variant stock deductions for', deductedVariants.length, 'variants...');
-    
-    for (const variant of deductedVariants) {
-        try {
-            // Restore the previous stock level
-            const { error } = await supabase
+// NEW: Function to update all variant stocks when a component stock changes
+async function updateVariantStocksForComponent(componentId) {
+    try {
+        // Get all variants that use this component
+        const { data: affectedVariants, error: variantsError } = await supabase
+            .from('variant_components')
+            .select('variant_id')
+            .eq('component_id', componentId);
+
+        if (variantsError || !affectedVariants) {
+            console.error('Error finding affected variants:', variantsError);
+            return;
+        }
+
+        // Update each variant's stock
+        for (const variantComponent of affectedVariants) {
+            const { error: updateError } = await supabase
                 .from('product_variants')
                 .update({
-                    available_stock: variant.previousStock,
+                    available_stock: supabase.sql`(
+                        SELECT MIN(c.available_stock / vc.quantity)
+                        FROM variant_components vc
+                        JOIN components c ON c.id = vc.component_id
+                        WHERE vc.variant_id = ${variantComponent.variant_id}
+                    )`,
                     last_stock_update: new Date().toISOString()
                 })
-                .eq('id', variant.variantId);
+                .eq('id', variantComponent.variant_id);
+
+            if (updateError) {
+                console.error('Error updating variant stock:', updateError);
+            }
+        }
+
+        console.log(`✅ Updated stock for all variants using component`);
+
+    } catch (error) {
+        console.error('Error updating variant stocks:', error);
+    }
+}
+
+// NEW: Rollback function for component deductions
+async function rollbackComponentDeductions(deductedComponents) {
+    console.log('🔄 Rolling back component stock deductions for', deductedComponents.length, 'components...');
+    
+    for (const component of deductedComponents) {
+        try {
+            // Restore the previous current_stock
+            const { error } = await supabase
+                .from('components')
+                .update({
+                    current_stock: component.previousCurrentStock,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', component.componentId);
 
             if (error) {
-                console.error(`❌ Failed to rollback stock for ${variant.productName}:`, error);
+                console.error(`❌ Failed to rollback component ${component.componentSku}:`, error);
             } else {
-                console.log(`✅ Rolled back stock for ${variant.productName}:`);
-                console.log(`   Stock: ${variant.newStock} → ${variant.previousStock}`);
+                console.log(`✅ Rolled back component ${component.componentSku}:`);
+                console.log(`   Current Stock: ${component.newCurrentStock} → ${component.previousCurrentStock}`);
+                
+                // Update variant stocks for this component
+                await updateVariantStocksForComponent(component.componentId);
             }
 
+            // Log the rollback transaction
+            await supabase
+                .from('inventory_transactions')
+                .insert({
+                    component_id: component.componentId,
+                    transaction_type: 'adjustment',
+                    quantity: component.deductedQuantity,
+                    reference_type: 'rollback',
+                    notes: 'Stock rollback due to order failure'
+                });
+
         } catch (error) {
-            console.error(`Error rolling back stock for ${variant.productName}:`, error);
+            console.error(`Error rolling back component ${component.componentSku}:`, error);
         }
     }
 }
@@ -2342,7 +2560,7 @@ async function rollbackStockReservations(reservedItems) {
 }
 
 // REPLACE showOrderSuccessMessage function in your cart.html
-function showOrderSuccessMessage(orderIdValue, checkoutData, selectedTotal, n8nSuccess, deductedVariants) {
+function showOrderSuccessMessage(orderIdValue, checkoutData, selectedTotal, n8nSuccess, deductedComponents) {
     let successMessage = '🎉 Order submitted successfully!\n\n';
 
     if (n8nSuccess) {
@@ -2365,17 +2583,51 @@ function showOrderSuccessMessage(orderIdValue, checkoutData, selectedTotal, n8nS
         successMessage += '🚨 This order is marked as URGENT\n';
     }
 
-    successMessage += '\n📦 STOCK UPDATED FOR INDEPENDENT VARIANTS:\n';
-    if (deductedVariants && deductedVariants.length > 0) {
-        successMessage += '\n✅ Stock deducted from individual product variants:\n';
-        deductedVariants.forEach(variant => {
-            successMessage += `• ${variant.productName}: `;
-            successMessage += `${variant.reservedQuantity} units deducted `;
-            successMessage += `(Stock: ${variant.previousStock} → ${variant.newStock})\n`;
+    successMessage += '\n📦 SHARED COMPONENTS UPDATED:\n';
+    if (deductedComponents && deductedComponents.length > 0) {
+        successMessage += '\n🔗 Stock deducted from shared component inventory:\n';
+        
+        // Group by component type for better display
+        const sharedComponents = [];
+        const uniqueComponents = [];
+        
+        deductedComponents.forEach(component => {
+            if (component.componentSku.startsWith('CB-') || 
+                component.componentSku.startsWith('LHL-') || 
+                component.componentSku.includes('SOCKET') ||
+                component.componentSku.includes('CANBUS')) {
+                sharedComponents.push(component);
+            } else {
+                uniqueComponents.push(component);
+            }
         });
         
-        successMessage += `\n✅ Total: ${deductedVariants.length} product variants updated independently.\n`;
-        successMessage += '📊 Each variant has its own separate inventory - no shared components.\n';
+        if (sharedComponents.length > 0) {
+            successMessage += '\n🔌 Shared Socket/Canbus Components:\n';
+            sharedComponents.forEach(component => {
+                successMessage += `• ${component.componentSku} (${component.componentName}): `;
+                successMessage += `${component.deductedQuantity} units deducted `;
+                successMessage += `(Stock: ${component.previousCurrentStock} → ${component.newCurrentStock})\n`;
+                
+                // Show which products are affected
+                if (component.affectedVariants && component.affectedVariants.length > 1) {
+                    successMessage += `  📊 Affects: ${component.affectedVariants.map(v => v.itemName).join(', ')}\n`;
+                }
+            });
+        }
+        
+        if (uniqueComponents.length > 0) {
+            successMessage += '\n📱 Product-Specific Casings:\n';
+            uniqueComponents.forEach(component => {
+                successMessage += `• ${component.componentSku} (${component.componentName}): `;
+                successMessage += `${component.deductedQuantity} units deducted `;
+                successMessage += `(Stock: ${component.previousCurrentStock} → ${component.newCurrentStock})\n`;
+            });
+        }
+        
+        successMessage += `\n✅ Total: ${deductedComponents.length} components updated in shared inventory.\n`;
+        successMessage += '📊 All products using these components now show updated stock levels.\n';
+        successMessage += '🔄 Socket stock affects Complete Package availability across all products.\n';
     }
 
     successMessage += '\n💳 Payment will be required after WhatsApp confirmation.';

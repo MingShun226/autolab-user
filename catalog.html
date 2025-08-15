@@ -1959,33 +1959,16 @@
                 </ul>
 
                 <div class="category-title" style="margin-top: 30px;">
-                    <span>Availability</span>
+                    <span>Car Brands</span>
                 </div>
-                <ul class="category-list">
+                <ul class="category-list" id="brandList">
                     <li class="category-item">
-                        <a href="#" class="category-link active" data-stock="all">
-                            <span>All</span>
-                            <span class="category-count" id="stockAllCount">0</span>
+                        <a href="#" class="category-link active" data-brand="all">
+                            <span>All Brands</span>
+                            <span class="category-count" id="brandAllCount">0</span>
                         </a>
                     </li>
-                    <li class="category-item">
-                        <a href="#" class="category-link" data-stock="in">
-                            <span>In Stock</span>
-                            <span class="category-count" id="inStockCount">0</span>
-                        </a>
-                    </li>
-                    <li class="category-item">
-                        <a href="#" class="category-link" data-stock="low">
-                            <span>Low Stock</span>
-                            <span class="category-count" id="lowStockCount">0</span>
-                        </a>
-                    </li>
-                    <li class="category-item">
-                        <a href="#" class="category-link" data-stock="out">
-                            <span>Out of Stock</span>
-                            <span class="category-count" id="outStockCount">0</span>
-                        </a>
-                    </li>
+                    <!-- Car brands will be populated dynamically -->
                 </ul>
             </div>
 
@@ -2638,12 +2621,12 @@
                     const viewDetailsBtn = productCard.querySelector(".view-details-btn");
                     viewDetailsBtn.addEventListener("click", function (event) {
                         event.stopPropagation();
-                        window.location.href = "product.html?id=" + product.id;
+                        window.location.href = "product.html?id=" + (product.product_id || product.id);
                     });
                     
                     // Product card click handler (for clicking anywhere else on the card)
                     productCard.addEventListener("click", function () {
-                        window.location.href = "product.html?id=" + product.id;
+                        window.location.href = "product.html?id=" + (product.product_id || product.id);
                     });
                     
                     productGrid.appendChild(productCard);
@@ -2770,10 +2753,15 @@
                 });
 
                 // Update stock counts
-                document.getElementById('stockAllCount').textContent = getFilteredCountForStock();
-                document.getElementById('inStockCount').textContent = getFilteredCountForStock('in');
-                document.getElementById('lowStockCount').textContent = getFilteredCountForStock('low');
-                document.getElementById('outStockCount').textContent = getFilteredCountForStock('out');
+                const stockAllCountElem = document.getElementById('stockAllCount');
+                const inStockCountElem = document.getElementById('inStockCount');
+                const lowStockCountElem = document.getElementById('lowStockCount');
+                const outStockCountElem = document.getElementById('outStockCount');
+                
+                if (stockAllCountElem) stockAllCountElem.textContent = getFilteredCountForStock();
+                if (inStockCountElem) inStockCountElem.textContent = getFilteredCountForStock('in');
+                if (lowStockCountElem) lowStockCountElem.textContent = getFilteredCountForStock('low');
+                if (outStockCountElem) outStockCountElem.textContent = getFilteredCountForStock('out');
             }
 
             // Update pagination
@@ -3203,16 +3191,15 @@
                         filterProducts();
                     }
                     
-                    if (e.target.closest('.category-link[data-stock]')) {
+                    if (e.target.closest('.category-link[data-brand]')) {
                         e.preventDefault();
-                        const link = e.target.closest('.category-link[data-stock]');
+                        const link = e.target.closest('.category-link[data-brand]');
                         
-                        document.querySelectorAll('.category-link[data-stock]').forEach(l => l.classList.remove('active'));
+                        document.querySelectorAll('.category-link[data-brand]').forEach(l => l.classList.remove('active'));
                         link.classList.add('active');
                         
-                        const stock = link.getAttribute('data-stock');
-                        advancedFilters.stock = stock === 'all' ? '' : stock;
-                        stockFilter.value = advancedFilters.stock;
+                        const brand = link.getAttribute('data-brand');
+                        advancedFilters.brand = brand === 'all' ? '' : brand;
                         filterProducts();
                     }
                 });

@@ -1198,7 +1198,7 @@
                 <div class="modal-product-info">
                     <div class="modal-product-name" id="modalProductName">Product Name</div>
                     <div class="modal-product-details">
-                        <span>SKU: <span id="modalProductSKU">N/A</span></span>
+                        <span>Component SKUs: <span id="modalProductSKU">N/A</span></span>
                         <span>Stock: <span id="modalProductStock">N/A</span></span>
                     </div>
                     <div class="modal-product-price" id="modalProductPrice">RM 0.00</div>
@@ -1245,30 +1245,69 @@
             return params.get('id');
         }
 
-        // Fetch product with variants from Supabase - UPDATED FOR NEW SCHEMA
+        // Fetch product with variants from Supabase - NEW CLEAN SCHEMA
         async function fetchProductWithVariants(productId) {
             console.log('🔍 Fetching product with ID:', productId);
             
             try {
-                // First get parent product from products table
-                const { data: parentProduct, error: parentError } = await supabase
+                // First, let's debug what products exist
+                console.log('🔍 Debug: Checking all products in database...');
+                const { data: allProducts, error: debugError } = await supabase
+                    .from('products')
+                    .select('id, product_id, name, brand, model, year')
+                    .limit(10);
+                
+                if (!debugError && allProducts) {
+                    console.log('📊 Available products:', allProducts);
+                }
+                
+                // Get parent product from products table (new schema)
+                let parentProduct;
+                const { data: productData, error: parentError } = await supabase
                     .from('products')
                     .select(`
                         *,
-                        brands (name),
-                        categories (name)
+                        brands (
+                            id,
+                            name,
+                            code
+                        )
                     `)
                     .eq('product_id', productId)
                     .single();
                 
                 if (parentError) {
-                    console.error('❌ Parent product not found:', parentError);
-                    return null;
+                    console.error('❌ Parent product not found by productID:', parentError);
+                    console.log('🔄 Trying alternative search methods...');
+                    
+                    // Try searching by UUID (in case the ID is actually a UUID)
+                    const { data: productByUuid, error: uuidError } = await supabase
+                        .from('products')
+                        .select(`
+                            *,
+                            brands (
+                                id,
+                                name,
+                                code
+                            )
+                        `)
+                        .eq('id', productId)
+                        .single();
+                    
+                    if (!uuidError && productByUuid) {
+                        console.log('✅ Found product by UUID:', productByUuid);
+                        parentProduct = productByUuid;
+                    } else {
+                        console.error('❌ Product not found by UUID either:', uuidError);
+                        return null;
+                    }
+                } else {
+                    parentProduct = productData;
                 }
 
                 console.log('✅ Parent product found:', parentProduct);
 
-                // Get all variants for this product
+                // Get all variants for this product with their components
                 const { data: variantData, error: variantError } = await supabase
                     .from('product_variants')
                     .select(`
@@ -1276,15 +1315,20 @@
                         variant_components (
                             *,
                             components (
+                                id,
                                 sku,
                                 name,
-                                type
+                                type,
+                                available_stock,
+                                current_stock,
+                                reserved_stock,
+                                retail_price,
+                                wholesale_price
                             )
                         )
                     `)
                     .eq('product_id', parentProduct.id)
-                    .eq('is_active', true)
-                    .order('display_order');
+                    .eq('is_active', true);
                 
                 let variants = [];
                 if (variantError) {
@@ -1292,13 +1336,34 @@
                 } else {
                     variants = variantData || [];
                     console.log(`✅ Found ${variants.length} variants`);
+                    
+                    // Calculate stock for each variant from components
+                    variants = variants.map(variant => {
+                        let availableStock = 0;
+                        
+                        if (variant.variant_components && variant.variant_components.length > 0) {
+                            // Calculate minimum available stock from all components
+                            const componentStocks = variant.variant_components.map(vc => {
+                                const component = vc.components;
+                                const quantityNeeded = vc.quantity || 1;
+                                return Math.floor((component.available_stock || 0) / quantityNeeded);
+                            });
+                            
+                            availableStock = Math.min(...componentStocks);
+                        }
+                        
+                        return {
+                            ...variant,
+                            available_stock: availableStock,
+                            variant_components: variant.variant_components || []
+                        };
+                    });
                 }
 
-                // Build complete product object
+                // Build complete product object (new schema fields)
                 return {
                     ...parentProduct,
                     brand: parentProduct.brands?.name || 'Unknown Brand',
-                    category: parentProduct.categories?.name || 'Unknown Category',
                     variants: variants
                 };
 
@@ -1308,7 +1373,7 @@
             }
         }
 
-        // Render product with variants - UPDATED FOR NEW SCHEMA
+        // Render product with variants - NEW CLEAN SCHEMA
         function renderProductWithVariants(product) {
             console.log('🎨 Rendering product with variants:', product);
             
@@ -1327,16 +1392,16 @@
             // Update product name
             document.querySelector('.product-name').textContent = product.name || 'Unknown Product';
             
-            // Update meta information
+            // Update meta information using new schema fields
             document.getElementById('parentSku').textContent = product.product_id || 'N/A';
             document.getElementById('variantCount').textContent = product.variants?.length || 0;
             
-            // Update specifications with NEW database fields
+            // Update specifications with database fields
             const brandModel = `${product.brand || 'Unknown'} ${product.model || ''}`.trim();
             document.getElementById('specBrandModel').textContent = brandModel || 'Not specified';
-            document.getElementById('specCategory').textContent = product.category || 'Not specified';
-            document.getElementById('specYearRange').textContent = product.year_range || 'Not specified';
-            document.getElementById('specScreenSize').textContent = product.screen_size || 'Not specified';
+            document.getElementById('specCategory').textContent = product.category || 'Auto Parts';
+            document.getElementById('specYearRange').textContent = product.year || 'Not specified';
+            document.getElementById('specScreenSize').textContent = product.screensize || 'Not specified';
             document.getElementById('specDescription').textContent = product.description || 'No description available.';
 
             // Store variants globally
@@ -1436,29 +1501,50 @@
             
             console.log('🎛️ Rendering variant options:', variants);
             
-            container.innerHTML = variants.map((variant, index) => {
-                // Get current user to determine pricing
+            // Sort variants by display_order: Casing (1) → Socket (2) → Package (3)
+            const sortedVariants = variants.sort((a, b) => (a.display_order || 999) - (b.display_order || 999));
+            
+            container.innerHTML = sortedVariants.map((variant, index) => {
+                // Calculate price from components
                 const userStr = localStorage.getItem('currentUser');
-                let displayPrice = variant.retail_price || 0;
+                let displayPrice = 0;
                 let priceLabel = '';
                 
-                if (userStr) {
-                    const user = JSON.parse(userStr);
-                    if (user.status === 'merchant' && variant.wholesale_price) {
-                        displayPrice = variant.wholesale_price;
-                        priceLabel = ' <span style="color: var(--secondary-600); font-size: 14px;">(B2B Price)</span>';
-                    }
+                // Sum up component prices
+                if (variant.variant_components && variant.variant_components.length > 0) {
+                    variant.variant_components.forEach(vc => {
+                        const component = vc.components;
+                        if (component) {
+                            const quantity = vc.quantity || 1;
+                            if (userStr) {
+                                const user = JSON.parse(userStr);
+                                if (user.status === 'merchant' && component.wholesale_price) {
+                                    displayPrice += (component.wholesale_price * quantity);
+                                    priceLabel = ' <span style="color: var(--secondary-600); font-size: 14px;">(B2B Price)</span>';
+                                } else {
+                                    displayPrice += (component.retail_price || 0) * quantity;
+                                }
+                            } else {
+                                displayPrice += (component.retail_price || 0) * quantity;
+                            }
+                        }
+                    });
                 }
                 
-                // Build components display
+                // Build components display with SKUs
                 let componentsDisplay = '';
                 if (variant.variant_components && variant.variant_components.length > 0) {
-                    const componentNames = variant.variant_components
-                        .map(vc => vc.components?.name || vc.component_sku)
+                    const componentDetails = variant.variant_components
+                        .map(vc => {
+                            const component = vc.components;
+                            if (!component) return null;
+                            const qty = vc.quantity || 1;
+                            return `${component.name} (${component.sku})${qty > 1 ? ` x${qty}` : ''}`;
+                        })
                         .filter(Boolean)
                         .join(', ');
-                    if (componentNames) {
-                        componentsDisplay = `<div class="variant-components">Components: ${componentNames}</div>`;
+                    if (componentDetails) {
+                        componentsDisplay = `<div class="variant-components">Components: ${componentDetails}</div>`;
                     }
                 }
                 
@@ -1473,7 +1559,6 @@
                                 <span class="variant-price">RM ${displayPrice.toFixed(2)}${priceLabel}</span>
                             </div>
                             <div class="variant-description">
-                                SKU: ${variant.variant_sku || 'N/A'} | 
                                 <span style="color: ${stockColor}; font-weight: 500;">Stock: ${stockStatus}</span>
                             </div>
                             ${componentsDisplay}
@@ -1505,17 +1590,40 @@
             });
             document.querySelector(`[data-variant-id="${variantId}"]`)?.classList.add('selected');
             
-            // Update price display
+            // Calculate price from components
             const userStr = localStorage.getItem('currentUser');
-            let displayPrice = selectedVariant.retail_price || 0;
-            let priceText = `RM ${displayPrice.toFixed(2)}`;
+            let displayPrice = 0;
+            let priceText = '';
+            
+            // Sum up component prices
+            if (selectedVariant.variant_components && selectedVariant.variant_components.length > 0) {
+                selectedVariant.variant_components.forEach(vc => {
+                    const component = vc.components;
+                    if (component) {
+                        const quantity = vc.quantity || 1;
+                        if (userStr) {
+                            const user = JSON.parse(userStr);
+                            if (user.status === 'merchant' && component.wholesale_price) {
+                                displayPrice += (component.wholesale_price * quantity);
+                            } else {
+                                displayPrice += (component.retail_price || 0) * quantity;
+                            }
+                        } else {
+                            displayPrice += (component.retail_price || 0) * quantity;
+                        }
+                    }
+                });
+            }
             
             if (userStr) {
                 const user = JSON.parse(userStr);
-                if (user.status === 'merchant' && selectedVariant.wholesale_price) {
-                    displayPrice = selectedVariant.wholesale_price;
+                if (user.status === 'merchant') {
                     priceText = `RM ${displayPrice.toFixed(2)} <span style="color: var(--secondary-600); font-size: 20px; margin-left: 8px;">(B2B Price)</span>`;
+                } else {
+                    priceText = `RM ${displayPrice.toFixed(2)}`;
                 }
+            } else {
+                priceText = `RM ${displayPrice.toFixed(2)}`;
             }
             
             document.querySelector('.current-price').innerHTML = priceText;
@@ -1540,7 +1648,16 @@
 
             // Populate modal with variant information
             document.getElementById('modalProductName').textContent = `${currentProduct.name} - ${selectedVariant.variant_name}`;
-            document.getElementById('modalProductSKU').textContent = selectedVariant.variant_sku || 'N/A';
+            
+            // Display component SKUs instead of variant SKU
+            let componentSKUs = 'N/A';
+            if (selectedVariant.variant_components && selectedVariant.variant_components.length > 0) {
+                componentSKUs = selectedVariant.variant_components
+                    .map(vc => vc.components?.sku)
+                    .filter(Boolean)
+                    .join(', ');
+            }
+            document.getElementById('modalProductSKU').textContent = componentSKUs;
             
             // Display stock status
             const stockElement = document.getElementById('modalProductStock');
@@ -1557,17 +1674,40 @@
                 stockElement.style.color = 'var(--error-dark)';
             }
             
-            // Display price
+            // Calculate price from components
             const userStr = localStorage.getItem('currentUser');
-            let displayPrice = selectedVariant.retail_price || 0;
-            let priceText = `RM ${displayPrice.toFixed(2)}`;
+            let displayPrice = 0;
+            let priceText = '';
+            
+            // Sum up component prices
+            if (selectedVariant.variant_components && selectedVariant.variant_components.length > 0) {
+                selectedVariant.variant_components.forEach(vc => {
+                    const component = vc.components;
+                    if (component) {
+                        const quantity = vc.quantity || 1;
+                        if (userStr) {
+                            const user = JSON.parse(userStr);
+                            if (user.status === 'merchant' && component.wholesale_price) {
+                                displayPrice += (component.wholesale_price * quantity);
+                            } else {
+                                displayPrice += (component.retail_price || 0) * quantity;
+                            }
+                        } else {
+                            displayPrice += (component.retail_price || 0) * quantity;
+                        }
+                    }
+                });
+            }
             
             if (userStr) {
                 const user = JSON.parse(userStr);
-                if (user.status === 'merchant' && selectedVariant.wholesale_price) {
-                    displayPrice = selectedVariant.wholesale_price;
+                if (user.status === 'merchant') {
                     priceText = `RM ${displayPrice.toFixed(2)} <span style="color: var(--secondary-600); font-size: 14px;">(B2B Price)</span>`;
+                } else {
+                    priceText = `RM ${displayPrice.toFixed(2)}`;
                 }
+            } else {
+                priceText = `RM ${displayPrice.toFixed(2)}`;
             }
             
             document.getElementById('modalProductPrice').innerHTML = priceText;
@@ -1633,6 +1773,21 @@
                     customer: user.id, 
                     quantity 
                 });
+                
+                // Verify customer exists in database
+                const { data: customerExists, error: customerError } = await supabase
+                    .from('customers')
+                    .select('id')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (customerError || !customerExists) {
+                    console.error('Customer not found in database:', customerError);
+                    localStorage.removeItem('currentUser');
+                    alert('Your session has expired. Please log in again.');
+                    window.location.href = 'customer-login.html';
+                    return;
+                }
                 
                 // Check if variant is already in cart
                 const { data: existingItems, error: queryError } = await supabase
